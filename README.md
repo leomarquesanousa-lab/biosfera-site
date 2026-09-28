@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Portal Biosfera Rádio TV Web
 
-## Getting Started
+Portal local em Next.js, TypeScript e Tailwind, com PostgreSQL via `pg`. Fases 1, 2 e 2.1: rádio persistente, autenticação, núcleo editorial, home integrada e importação assistida de matérias.
 
-First, run the development server:
+## Executar
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. `npm install`.
+2. Copie `.env.example` para `.env.local` somente se ainda não existir. Preserve a conexão Neon e o OWNER já configurados.
+3. Configure `DATABASE_URL` e `SITE_URL` (localmente: `http://localhost:3000`).
+4. `npm run db:migrate` — aplica somente migrations pendentes, sem alterar a 001.
+5. `npm run dev`.
+
+Portal: http://localhost:3000 · Painel: http://localhost:3000/admin
+
+Em instalação nova, configure as três variáveis `ADMIN_INITIAL_OWNER_*`, execute `npm run db:bootstrap` e remova essas variáveis. Não recrie o OWNER já existente.
+
+No PowerShell com scripts bloqueados, use `npm.cmd`.
+
+## Fluxo editorial
+
+- OWNER/ADMIN cadastram categorias e autores em `/admin/categorias` e `/admin/autores`.
+- OWNER/ADMIN/EDITOR criam e editam notícias em `/admin/noticias`.
+- Selecione autor e pelo menos uma categoria. Escreva com os controles de Markdown e confira a prévia.
+- Envie imagens JPEG, PNG ou WebP de até 5 MB. Os arquivos convertidos ficam em `storage/uploads`, fora do Git.
+- Salve como rascunho, publicada, agendada ou arquivada. Datas do formulário são **UTC**.
+- Notícias agendadas aparecem automaticamente quando a data chega, sem cron.
+- Em `/admin/noticias/nova`, “Importar matéria por URL” preenche um rascunho editável. Revise texto, fonte, autor e categorias antes de salvar; a importação não salva nem publica automaticamente.
+- Pedidos enviados pela home aparecem em `/admin/pedidos-musicais`, para OWNER, ADMIN e EDITOR.
+- A câmera carrega apenas após clique. Configure `LIVE_CAMERA_EMBED_URL` em settings ou no ambiente; existe fallback para o player Biosfera.
+
+## Verificar
+
+```shell
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run test:e2e
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+E2E requer Edge, porta 3100 livre e `TEST_DATABASE_URL` de PostgreSQL **local** com permissão de criar banco. Pode ser configurada em `.env.test.local`, ignorado pelo Git. Os testes recusam usar Neon e criam/removem um banco temporário próprio.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Veja a [documentação técnica](docs/DOCUMENTACAO_TECNICA_PORTAL_BIOSFERA.md) para tabelas, permissões, uploads, SEO, testes e decisões. Sem deploy, DNS, migração do portal antigo ou alterações no site atual.
