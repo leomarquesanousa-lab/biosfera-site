@@ -34,13 +34,14 @@ test('home: zero, uma, duas e mais notícias, destaque, cronologia, sem duplicar
   await article('noticia-recente','PUBLISHED');
   await article('destaque-antigo','PUBLISHED',true,10);
   await page.reload();
-  await expect(page.locator('.home-headlines .news-card')).toHaveCount(2);
+  await expect(page.locator('.home-headlines .news-card')).toHaveCount(3);
   await expect(page.locator('.home-headlines .news-card h2').first()).toHaveText('destaque-antigo');
   await expect(page.locator('.home-headlines .news-card h2').nth(1)).toHaveText('noticia-recente');
-  await expect(page.locator('.home-latest .news-card h2')).toHaveText('noticia-unica');
+  await expect(page.locator('.home-headlines .news-card h2').nth(2)).toHaveText('noticia-unica');
+  await expect(page.locator('.home-latest .news-card')).toHaveCount(0);
   await pool.query('UPDATE news SET featured=true WHERE id=$1',[first]);
   await page.reload();
-  await expect(page.locator('.home-headlines .news-card h2')).toHaveText(['noticia-unica','destaque-antigo']);
+  await expect(page.locator('.home-headlines .news-card h2')).toHaveText(['noticia-unica','destaque-antigo','noticia-recente']);
   const titles=await page.locator('.portal-home .news-card h2').allTextContents();
   expect(new Set(titles).size).toBe(titles.length);
   for(const name of ['rascunho-oculto','arquivo-oculto','agendada-futura'])expect(titles).not.toContain(name);
@@ -108,4 +109,31 @@ test('importador administrativo rejeita URL interna e não cria ou publica notí
   await expect(page.locator('.import-panel .form-error')).toContainText('bloqueado');
   await expect(page.getByLabel('Status',{exact:true})).toHaveValue('DRAFT');
   expect(Number((await pool.query('SELECT count(*) FROM news')).rows[0].count)).toBe(before);
+});
+
+test('cards uniformes com capas horizontal, quadrada, vertical e ausente',async({page})=>{
+ await pool.query("UPDATE news SET status='ARCHIVED'");
+ const author=randomUUID();await pool.query("INSERT INTO authors(id,name,slug) VALUES($1,'Teste de proporções',$2)",[author,'proporcoes-'+author]);
+ const shapes=[[1200,600],[600,600],[600,1200]];
+ for(let i=0;i<4;i++){
+  const id=randomUUID();
+  await pool.query("INSERT INTO news(id,title,slug,body,author_id,status,published_at,cover_image) VALUES($1,$2,$3,'Teste local',$4,'PUBLISHED',now()-$5*interval '1 minute',$6)",[id,i===1?'Título longo para verificar a uniformidade visual dos cards mesmo com muitas palavras e várias linhas adicionais de conteúdo editorial':'Notícia '+(i+1),'proporcao-'+id,author,i,i<3?'/fixture-card-'+i+'.svg':'']);
+ }
+ await page.route('**/fixture-card-*.svg',route=>{
+  const i=Number(route.request().url().match(/fixture-card-(\d)/)![1]);const [w,h]=shapes[i];
+  return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'"><rect width="100%" height="100%" fill="#102a51"/><circle cx="50%" cy="50%" r="180" fill="#24d5ef"/><text x="50%" y="50%" text-anchor="middle" font-size="36">'+w+' × '+h+'</text></svg>'});
+ });
+ for(const width of [1440,768,390]){
+  await page.setViewportSize({width,height:1000});await page.goto('/');
+  await expect(page.locator('.home-news-card')).toHaveCount(4);
+  await expect(page.locator('.home-news-placeholder')).toHaveCount(1);
+  const cards=await page.locator('.home-news-card').evaluateAll(els=>els.map(el=>{
+   const box=el.getBoundingClientRect(),media=el.querySelector('.home-news-media')!.getBoundingClientRect();
+   return {height:box.height,y:box.y,bottom:box.bottom,media:media.height,ratio:media.width/media.height,title:el.querySelector('h2')!.getBoundingClientRect().y-box.y,date:el.querySelector('small')!.getBoundingClientRect().bottom-box.y};
+  }));
+  for(const c of cards){expect(c.ratio).toBeCloseTo(16/9,2);expect(Math.abs(c.height-cards[0].height)).toBeLessThan(2);expect(Math.abs(c.title-cards[0].title)).toBeLessThan(2);expect(Math.abs(c.date-cards[0].date)).toBeLessThan(2);}
+  if(width===1440)for(const c of cards.slice(0,3))expect(c.bottom).toBeCloseTo(cards[0].bottom,0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:'test-results/news-uniform-'+width+'.png',fullPage:true});
+ }
 });

@@ -67,5 +67,5 @@ export async function homeNews() {
     ORDER BY (n.id IN (SELECT id FROM lead)) DESC,
     CASE WHEN n.id IN (SELECT id FROM lead) THEN n.featured ELSE false END DESC,
     n.visible_at DESC,n.id LIMIT 8`);
-  return {lead:result.rows.slice(0,2),recent:result.rows.slice(2),renderedAt:Date.now()};
+  return {lead:result.rows.slice(0,3),recent:result.rows.slice(3),renderedAt:Date.now()};
 }
