@@ -1,21 +1,64 @@
 import 'server-only';
-import { mkdir, writeFile, readFile, unlink } from 'node:fs/promises';
+
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-// Interface pequena: a implementação pode ser substituída por storage externo.
-// Arquivos de runtime não integram o bundle; storage deve ser persistido separadamente.
-const directory = () => path.resolve(/* turbopackIgnore: true */ process.env.UPLOAD_DIR || 'storage/uploads');
+
+const uploadDirectory = () =>
+  path.resolve(process.env.UPLOAD_DIR || 'storage/uploads');
+
+const publicMediaDirectory = () =>
+  path.resolve('public/media');
+
+const IMAGE_FILENAME_REGEX =
+  /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.webp$/;
+
 export async function storeImage(bytes: Buffer) {
   const filename = `${randomUUID()}.webp`;
-  await mkdir(directory(), { recursive: true });
-  await writeFile(path.join(directory(), filename), bytes, { flag: 'wx' });
+
+  await mkdir(uploadDirectory(), { recursive: true });
+
+  await writeFile(
+    path.join(uploadDirectory(), filename),
+    bytes,
+    { flag: 'wx' },
+  );
+
   return `/media/${filename}`;
 }
+
 export async function readImage(filename: string) {
-  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.webp$/.test(filename)) return null;
-  try { return await readFile(/* turbopackIgnore: true */ path.join(/* turbopackIgnore: true */ directory(), filename)); } catch { return null; }
+  if (!IMAGE_FILENAME_REGEX.test(filename)) {
+    return null;
+  }
+
+  // Primeiro tenta o storage de runtime.
+  try {
+    return await readFile(
+      path.join(uploadDirectory(), filename),
+    );
+  } catch {
+    // Continua para o fallback.
+  }
+
+  // Fallback para imagens versionadas junto com o site.
+  try {
+    return await readFile(
+      path.join(publicMediaDirectory(), filename),
+    );
+  } catch {
+    return null;
+  }
 }
+
 export async function discardImage(url: string) {
   const filename = url.split('/').pop() || '';
-  if (/^[a-f0-9-]{36}\.webp$/.test(filename)) await unlink(path.join(/* turbopackIgnore: true */ directory(),filename)).catch(() => {});
+
+  if (!IMAGE_FILENAME_REGEX.test(filename)) {
+    return;
+  }
+
+  await unlink(
+    path.join(uploadDirectory(), filename),
+  ).catch(() => {});
 }

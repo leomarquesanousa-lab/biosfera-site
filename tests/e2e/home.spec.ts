@@ -23,32 +23,32 @@ test('home: zero, uma, duas e mais notícias, destaque, cronologia, sem duplicar
   }
   await article('rascunho-oculto','DRAFT',true);await article('arquivo-oculto','ARCHIVED',true);const scheduled=await article('agendada-futura','SCHEDULED',true);
   await page.goto('/');
-  await expect(page.getByText('ACOMPANHE A BIOSFERA',{exact:true})).toBeVisible();
+  await expect(page.getByText('Em breve, acompanhe aqui as notícias da Biosfera.',{exact:true})).toBeVisible();
   await expect(page.locator('.portal-home .news-card')).toHaveCount(0);
   await expect(page.locator('.portal-home')).not.toContainText('Nenhuma notícia');
   const first=await article('noticia-unica','PUBLISHED',false,3);
   await page.reload();
-  await expect(page.locator('.home-headlines .news-card')).toHaveCount(1);
-  await expect(page.locator('.single-headline')).toHaveCount(1);
-  await expect(page.getByText('ACOMPANHE A BIOSFERA',{exact:true})).toHaveCount(0);
+  await expect(page.locator('.home-latest .news-card')).toHaveCount(1);
+  await expect(page.locator('.home-latest .news-grid')).toHaveCount(1);
+  await expect(page.getByText('Em breve, acompanhe aqui as notícias da Biosfera.',{exact:true})).toHaveCount(0);
   await article('noticia-recente','PUBLISHED');
   await article('destaque-antigo','PUBLISHED',true,10);
   await page.reload();
-  await expect(page.locator('.home-headlines .news-card')).toHaveCount(3);
-  await expect(page.locator('.home-headlines .news-card h2').first()).toHaveText('destaque-antigo');
-  await expect(page.locator('.home-headlines .news-card h2').nth(1)).toHaveText('noticia-recente');
-  await expect(page.locator('.home-headlines .news-card h2').nth(2)).toHaveText('noticia-unica');
-  await expect(page.locator('.home-latest .news-card')).toHaveCount(0);
+  await expect(page.locator('.home-latest .news-card')).toHaveCount(3);
+  await expect(page.locator('.home-latest .news-card h2').first()).toHaveText('destaque-antigo');
+  await expect(page.locator('.home-latest .news-card h2').nth(1)).toHaveText('noticia-recente');
+  await expect(page.locator('.home-latest .news-card h2').nth(2)).toHaveText('noticia-unica');
+  await expect(page.locator('.home-latest .news-card')).toHaveCount(3);
   await pool.query('UPDATE news SET featured=true WHERE id=$1',[first]);
   await page.reload();
-  await expect(page.locator('.home-headlines .news-card h2')).toHaveText(['noticia-unica','destaque-antigo','noticia-recente']);
+  await expect(page.locator('.home-latest .news-card h2')).toHaveText(['noticia-unica','destaque-antigo','noticia-recente']);
   const titles=await page.locator('.portal-home .news-card h2').allTextContents();
   expect(new Set(titles).size).toBe(titles.length);
   for(const name of ['rascunho-oculto','arquivo-oculto','agendada-futura'])expect(titles).not.toContain(name);
   await pool.query("UPDATE news SET scheduled_at=now()-interval '1 minute' WHERE id=$1",[scheduled]);
-  await page.reload();await expect(page.locator('.home-headlines')).toContainText('agendada-futura');
+  await page.reload();await expect(page.locator('.home-latest')).toContainText('agendada-futura');
   await page.setViewportSize({width:1440,height:1000});
-  for(const row of ['.broadcast-row','.community-row','.headline-grid']) {
+  for(const row of ['.broadcast-row','.community-row','.home-latest .news-grid']) {
     const boxes=await page.locator(`${row}>*`).evaluateAll(elements=>elements.map(el=>({x:el.getBoundingClientRect().x,y:el.getBoundingClientRect().y})));
     expect(Math.abs(boxes[0].y-boxes[1].y)).toBeLessThan(2);expect(boxes[1].x).toBeGreaterThan(boxes[0].x);
   }
@@ -104,8 +104,11 @@ test('importador administrativo rejeita URL interna e não cria ou publica notí
   await auth(context);
   const before=Number((await pool.query('SELECT count(*) FROM news')).rows[0].count);
   await page.goto('/admin/noticias/nova');await page.getByText('Importar matéria por URL',{exact:true}).click();
+  await expect(page.getByRole('button',{name:'IMPORTAR PARA EDIÇÃO',exact:true})).toHaveAttribute('type','button');
+  expect(await page.locator('.news-form').evaluate((form:HTMLFormElement)=>form.checkValidity())).toBe(false);
+  expect(await page.getByLabel('URL da matéria',{exact:true}).evaluate((input:HTMLInputElement)=>input.form===document.querySelector('.news-form'))).toBe(false);
   await page.getByLabel('URL da matéria',{exact:true}).fill('http://127.0.0.1');page.once('dialog',dialog=>dialog.accept());
-  await page.getByRole('button',{name:'Importar',exact:true}).click();
+  await page.getByRole('button',{name:'IMPORTAR PARA EDIÇÃO',exact:true}).click();
   await expect(page.locator('.import-panel .form-error')).toContainText('bloqueado');
   await expect(page.getByLabel('Status',{exact:true})).toHaveValue('DRAFT');
   expect(Number((await pool.query('SELECT count(*) FROM news')).rows[0].count)).toBe(before);

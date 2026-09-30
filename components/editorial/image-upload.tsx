@@ -1,7 +1,8 @@
 'use client';
 /* eslint-disable @next/next/no-img-element -- arquivos locais já redimensionados e convertidos no upload */
 import { useState } from 'react';
-export function ImageUpload({ label, value, onChange,endpoint='/api/editorial/upload' }: { label: string; value: string; onChange: (value: string) => void;endpoint?:string }) {
+import { EditorialImageUpload } from './editorial-image-upload';
+function ExistingImageUpload({ label, value, onChange,endpoint='/api/editorial/upload' }: { label: string; value: string; onChange: (value: string) => void;endpoint?:string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return <div className="image-upload">
@@ -22,4 +23,8 @@ export function ImageUpload({ label, value, onChange,endpoint='/api/editorial/up
     {error && <p className="form-error" role="alert">{error}</p>}
     {value && <><img className="upload-preview" src={value} alt="Prévia da imagem enviada" /><button type="button" className="text-button" onClick={() => onChange('')}>Remover imagem do formulário</button></>}
   </div>;
+}
+
+export function ImageUpload(props: {label:string;value:string;onChange:(value:string)=>void;endpoint?:string}) {
+  return props.endpoint && props.endpoint !== '/api/editorial/upload' ? <ExistingImageUpload {...props}/> : <EditorialImageUpload {...props}/>;
 }

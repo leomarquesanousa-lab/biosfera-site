@@ -7,9 +7,11 @@ import type { News, Taxonomy } from '@/lib/editorial/types';
 import type { ImportedArticle } from '@/lib/editorial/import-types';
 import { MarkdownEditor } from './markdown-editor';
 import { ImageUpload } from './image-upload';
-function utcInput(date: Date | null | undefined) { return date ? new Date(date).toISOString().slice(0,16) : ''; }
+function utcInput(date: Date | string | null | undefined) { return date ? new Date(date).toISOString().slice(0,16) : ''; }
 export function NewsForm({ item, imported, authors, categories }: { item?: News; imported?:ImportedArticle; authors: Taxonomy[]; categories: Taxonomy[] }) {
   const router = useRouter();
+  const matchingAuthors = imported?.original_author ? authors.filter(author => author.active && author.name.trim().toLocaleLowerCase('pt-BR') === imported.original_author.trim().toLocaleLowerCase('pt-BR')) : [];
+  const importedAuthorId = matchingAuthors.length === 1 ? matchingAuthors[0].id : '';
   const [title,setTitle] = useState(item?.title || imported?.title || '');
   const [slug,setSlug] = useState(item?.slug || slugify(imported?.title || ''));
   const [slugEdited,setSlugEdited] = useState(Boolean(item));
@@ -33,7 +35,7 @@ export function NewsForm({ item, imported, authors, categories }: { item?: News;
     });
   }}>
     <input type="hidden" name="id" value={item?.id || ''} /><input type="hidden" name="version" value={item?.version || ''} />
-    {imported && <aside className="import-origin"><input type="hidden" name="imported" value="1" /><h2>Origem importada — revisão necessária</h2><p>{imported.source_name || 'Fonte sem nome identificado'}</p><a href={imported.source_url} target="_blank" rel="noopener noreferrer">Consultar matéria original ↗</a>{imported.original_author && <p>Autoria na fonte: {imported.original_author}. Selecione o autor editorial abaixo.</p>}{imported.original_published_at && <p>Publicação na fonte: {new Date(imported.original_published_at).toLocaleString('pt-BR',{timeZone:'UTC'})} UTC. A data do portal é definida separadamente.</p>}{!imported.body && <p>Texto principal não identificado. Preencha o conteúdo manualmente.</p>}{imported.external_image_url && <p>Imagem identificada: <a href={imported.external_image_url} target="_blank" rel="noopener noreferrer">Consultar referência externa ↗</a>. Nenhum arquivo foi baixado. Envie uma capa que você tenha autorização para utilizar.</p>}</aside>}
+    {imported && <aside className="import-origin"><input type="hidden" name="imported" value="1" /><h2>Origem importada — revisão necessária</h2><p>{imported.source_name || 'Fonte sem nome identificado'}</p><a href={imported.source_url} target="_blank" rel="noopener noreferrer">Consultar matéria original ↗</a>{imported.original_author && <p>Autoria na fonte: {imported.original_author}. Confira o autor editorial abaixo.</p>}{imported.original_published_at && <p>Publicação na fonte: {new Date(imported.original_published_at).toLocaleString('pt-BR',{timeZone:'UTC'})} UTC. Confira a data preenchida abaixo antes de salvar.</p>}{!imported.body && <p>Texto principal não identificado. Preencha o conteúdo manualmente.</p>}{imported.external_image_url && <p>Imagem identificada: <a href={imported.external_image_url} target="_blank" rel="noopener noreferrer">Consultar referência externa ↗</a>. Nenhum arquivo foi baixado. Envie uma capa que você tenha autorização para utilizar.</p>}</aside>}
     <fieldset><legend>Matéria</legend>
       <label>Título *<input name="title" required maxLength={240} value={title} onChange={event => { setTitle(event.target.value); if (!slugEdited) setSlug(slugify(event.target.value)); }} /></label>
       <label>Slug *<input name="slug" required maxLength={180} pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={event => { setSlugEdited(true); setSlug(event.target.value); }} /></label>
@@ -43,7 +45,7 @@ export function NewsForm({ item, imported, authors, categories }: { item?: News;
       <MarkdownEditor value={body} onChange={setBody} />
     </fieldset>
     <fieldset><legend>Autoria e categorias</legend>
-      <label>Autor *<select aria-label="Autor *" name="author_id" required defaultValue={item?.author_id || ''}><option value="">Selecione</option>{authors.filter(author => author.active || author.id === item?.author_id).map(author => <option key={author.id} value={author.id}>{author.name}{!author.active && ' (inativo)'}</option>)}</select></label>
+      <label>Autor *<select aria-label="Autor *" name="author_id" required defaultValue={item?.author_id || importedAuthorId}><option value="">Selecione</option>{authors.filter(author => author.active || author.id === item?.author_id).map(author => <option key={author.id} value={author.id}>{author.name}{!author.active && ' (inativo)'}</option>)}</select></label>
       <div><p>Categorias * <small>Selecione pelo menos uma.</small></p><div className="category-options">{categories.filter(category => category.active || item?.categories.some(c=>c.id===category.id)).map(category => <label className="check-label" key={category.id}><input name="category_ids" type="checkbox" value={category.id} defaultChecked={item?.categories.some(c=>c.id===category.id)} />{category.name}{!category.active && ' (inativa)'}</label>)}</div></div>
       {(!authors.some(a=>a.active) || !categories.some(c=>c.active)) && <p className="form-error">Um administrador deve cadastrar autor e categoria ativos antes da criação da notícia.</p>}
     </fieldset>
@@ -55,7 +57,7 @@ export function NewsForm({ item, imported, authors, categories }: { item?: News;
     <fieldset><legend>Publicação</legend>
       <label>Status<select aria-label="Status" name="status" value={status} onChange={event=>setStatus(event.target.value as typeof status)}>{statuses.map(value=><option key={value} value={value}>{statusLabels[value]}</option>)}</select></label>
       <p className="muted">Datas em UTC. Publicada sem data usa o momento do salvamento. Para publicação futura, escolha Agendada. Agendada com data passada fica pública imediatamente.</p>
-      <label>Data de publicação (UTC)<input name="published_at" type="datetime-local" defaultValue={utcInput(item?.published_at)} /></label>
+      <label>Data de publicação (UTC)<input name="published_at" type="datetime-local" defaultValue={utcInput(item?.published_at || imported?.original_published_at)} /></label>
       <label>Agendamento (UTC)<input name="scheduled_at" type="datetime-local" required={status==='SCHEDULED'} defaultValue={utcInput(item?.scheduled_at)} /></label>
       <label className="check-label"><input name="featured" type="checkbox" defaultChecked={item?.featured} /> Destaque na home</label>
       <p className="muted">Para retirar uma notícia do portal, salve com status Arquivada. O histórico é preservado.</p>

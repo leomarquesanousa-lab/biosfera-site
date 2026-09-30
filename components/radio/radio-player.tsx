@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { RadioWave } from './radio-wave';
 import { LiveBadge } from '@/components/live-badge';
-import { Brand } from '@/components/brand';
 import type { Slot } from '@/server/services/programming';
 export type RadioProgramming={current:Slot|null;next:Slot[]};
 type Status = 'paused' | 'loading' | 'playing' | 'error';
@@ -84,7 +83,7 @@ export function HomeRadio({siteName,nowPlaying}:{siteName:string;nowPlaying?:{na
   const active=status==='playing'||status==='loading';
   return <section className="home-radio" aria-labelledby="radio-title" id="radio-ao-vivo"><div className="panel-heading"><h2 id="radio-title">Rádio ao vivo</h2><LiveBadge/></div>
     <div className="radio-feature"><RadioWave playing={status==='playing'}/>
-      <div><div className="radio-brand"><Brand light/></div><p className="radio-tagline">A sua companhia, em qualquer lugar.</p></div></div>
+      <div><p className="radio-tagline">A sua companhia, em qualquer lugar.</p></div></div>
     {nowPlaying&&<div className="now-playing"><small>NO AR AGORA</small><strong>{nowPlaying.name}</strong><span>{nowPlaying.presenters}</span></div>}<p className="radio-station">{siteName}</p><div className="home-radio-controls"><button type="button" className="listen-button" aria-label={active?'Pausar transmissão':'Iniciar transmissão'} onClick={toggle}><span aria-hidden="true">{active?'Ⅱ':'▶'}</span>{active?'Pausar':'Ouvir agora'}</button><label>Volume<input aria-label="Volume da transmissão" type="range" min="0" max="1" step="0.01" value={volume} onChange={event=>changeVolume(Number(event.target.value))}/></label></div>
     <p className="home-radio-status" aria-live="polite">{labels[status]}</p>
   </section>;

@@ -5,14 +5,12 @@ import { Pagination } from './pagination';
 export async function PublicNews({ query, search = false }: { query: Record<string,string|string[]|undefined>; search?: boolean }) {
   const filters = { q: queryValue(query.q), category: queryValue(query.category), page: queryValue(query.page) };
   const [result,categories] = await Promise.all([listNews(filters),taxonomyList('categories',true)]);
-  const highlight = !search && !filters.q && !filters.category && result.page === 1 ? (await listNews({ featured:true,limit:1 })).items[0] : null;
   return <><p className="eyebrow">JORNALISMO BIOSFERA</p><h1>{search ? 'Busca de notícias' : 'Notícias'}</h1>
     <form className="filters public-filters" action={search ? '/busca' : '/noticias'}><label>Buscar notícias<input type="search" name="q" maxLength={200} defaultValue={filters.q} placeholder="O que você procura?" /></label>
       <label>Categoria<select name="category" defaultValue={filters.category}><option value="">Todas as categorias</option>{categories.map(c=><option key={c.id} value={c.slug}>{c.name}</option>)}</select></label><button className="button">Buscar</button></form>
     <nav className="category-tags" aria-label="Categorias"><Link href="/noticias">Todas</Link>{categories.map(c=><Link href={`/noticias?category=${c.slug}`} key={c.id}>{c.name}</Link>)}</nav>
-    {highlight && <section aria-label="Notícia em destaque"><p className="eyebrow">EM DESTAQUE</p><NewsCard news={highlight} featured /></section>}
     <div className="section-heading"><h2>{search ? `Resultados${filters.q ? ` para “${filters.q}”` : ''}` : 'Últimas notícias'}</h2><span>{result.count} notícia(s)</span></div>
-    <div className="news-grid">{result.items.filter(item=>item.id!==highlight?.id).map(item=><NewsCard news={item} key={item.id} />)}</div>
+    <div className="news-grid">{result.items.map(item=><NewsCard news={item} key={item.id} />)}</div>
     {!result.count && <p className="empty-state">Nenhuma notícia publicada encontrada{filters.q ? ' para esta busca' : ''}.</p>}
     <Pagination base={search ? '/busca' : '/noticias'} page={result.page} pages={result.pages} params={filters} />
   </>;
