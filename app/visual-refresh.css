@@ -412,3 +412,7 @@ input[type=checkbox] {accent-color:var(--blue);width:18px;height:18px}
 .home-ad-outline {display:grid;place-items:center;width:60px;height:96px;border:1px dashed var(--line);border-radius:12px;background:var(--white)}
 .home-ad-outline span {width:28px;height:3px;border-radius:2px;background:var(--line)}
 @media(max-width:760px){.home-banner-area {grid-template-columns:minmax(0,1fr);gap:16px}.home-banner-frame {height:clamp(160px,45vw,280px)}.home-ad-placeholder {height:140px;padding:16px;gap:10px}.home-ad-outline {display:none}.home-ad-placeholder p {font-size:14px}}
+
+/* Integrações do painel */
+.integration-card{display:grid;gap:1rem;padding:1.25rem;border:1px solid var(--border-color,#dbe3ec);border-radius:16px;background:var(--surface,#fff)}
+.integration-card h2{margin:0 0 .35rem}.integration-card p{margin:0}.integration-note{padding:1rem;border-radius:12px;background:#f6f8fb}

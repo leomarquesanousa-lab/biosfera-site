@@ -24,7 +24,7 @@ async function freshActor(client:PoolClient,id:string){
 }
 function password(form:FormData){try{return validatePassword(form.get('password'),form.get('confirmation'));}catch(e){throw new EditorialError((e as Error).message);}}
 export async function saveUser(form:FormData,actorId:string,self=false){
- const intent=String(form.get('intent')||'save');if(!['save','reset','delete','password'].includes(intent))throw new EditorialError('Ação inválida.');
+ const intent=String(form.get('intent')||'save');if(!['save','reset','delete','password','activate','deactivate'].includes(intent))throw new EditorialError('Ação inválida.');
  if(self&&!['save','password'].includes(intent))throw new EditorialError('Ação inválida.');
  const suppliedId=String(form.get('id')||'');const id=self?actorId:suppliedId?uuid(suppliedId):randomUUID();const creating=!self&&!suppliedId;
  if(creating&&intent!=='save')throw new EditorialError('Cadastre o usuário primeiro.');
@@ -41,7 +41,7 @@ export async function saveUser(form:FormData,actorId:string,self=false){
  if(self&&(form.has('role')||form.has('email')||form.has('active')))throw new EditorialError('Minha Conta permite alterar apenas nome e senha.');
  const role=self?actor.role:intent==='save'?text(form,'role',10,true):existing.role;
  if(!['OWNER','ADMIN','EDITOR'].includes(role)||(!self&&!canManageUser(actor.role,existing?.role||role,role)))throw new EditorialError('Você não tem permissão para gerenciar este usuário ou conceder este papel.');
- let active=self?true:intent==='delete'?false:intent==='save'?form.get('active')==='on':existing.active;
+ let active=self?true:intent==='delete'||intent==='deactivate'?false:intent==='activate'?true:intent==='save'?form.get('active')==='on':existing.active;
  if(existing?.role==='OWNER'&&existing.active&&(!active||role!=='OWNER')){
   const owners=await client.query("SELECT count(*)::int AS n FROM users WHERE role='OWNER' AND active AND deleted_at IS NULL");
   if(owners.rows[0].n<=1)throw new EditorialError('O último OWNER ativo não pode ser desativado, excluído ou rebaixado.');
@@ -52,6 +52,10 @@ export async function saveUser(form:FormData,actorId:string,self=false){
  }
  if(intent==='reset'||intent==='password'){await client.query('UPDATE users SET password_hash=$1,updated_at=now() WHERE id=$2',[encoded,id]);events.push(intent==='reset'?'users.password_reset':'users.password_changed');}
  else if(intent==='delete'){active=false;await client.query('UPDATE users SET active=false,deleted_at=now(),updated_at=now() WHERE id=$1',[id]);events.push('users.deleted');}
+ else if(intent==='activate'||intent==='deactivate'){
+  await client.query('UPDATE users SET active=$1,updated_at=now() WHERE id=$2',[active,id]);
+  if(existing.active!==active)events.push(active?'users.activated':'users.deactivated');
+ }
  else{
   const name=text(form,'name',120,true),email=self?existing.email:text(form,'email',254,true).toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new EditorialError('Informe um e-mail válido.');

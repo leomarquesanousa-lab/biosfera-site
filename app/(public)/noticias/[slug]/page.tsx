@@ -10,6 +10,7 @@ import { renderBody } from '@/lib/editorial/content.mjs';
 import { articleUrl, siteUrl, jsonLd } from '@/lib/editorial/seo';
 import { NewsCard } from '@/components/editorial/news-card';
 import { Share } from '@/components/editorial/share';
+import { brandAssets } from '@/lib/brand';
 type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const news = await publicNewsBySlug((await params).slug);
@@ -32,7 +33,7 @@ export default async function Page({ params }: Props) {
     { '@context':'https://schema.org','@type':'NewsArticle',headline:news.title,description:news.excerpt || news.subtitle,
       datePublished:news.visible_at?.toISOString(),dateModified:news.updated_at.toISOString(),mainEntityOfPage:articleUrl(news),
       ...(news.cover_image ? {image:[`${siteUrl()}${news.cover_image}`]} : {}),
-      author:{'@type':'Person',name:news.author_name},publisher:{'@type':'Organization',name:settings.siteName},
+      author:{'@type':'Person',name:news.author_name},publisher:{'@type':'Organization',name:settings.siteName,url:siteUrl(),logo:{'@type':'ImageObject',url:`${siteUrl()}${brandAssets.logo}`}},
     },
     { '@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[
       {'@type':'ListItem',position:1,name:'Início',item:siteUrl()},

@@ -1,4 +1,5 @@
-﻿import Link from 'next/link';
+﻿import type { Metadata } from 'next';
+import Link from 'next/link';
 import { BannerRotation } from '@/components/home/banner-rotation';
 import { Broadcast } from '@/components/programming/broadcast';
 import { currentProgramming } from '@/server/services/programming';
@@ -6,8 +7,16 @@ import { LiveCamera } from '@/components/home/live-camera';
 import { ChatPreview } from '@/components/home/chat-preview';
 import { SongRequest } from '@/components/home/song-request';
 import { NewsCard } from '@/components/editorial/news-card';
+import { pageMetadata } from '@/lib/editorial/seo';
 import { getSettings } from '@/server/services/settings';
 import { homeNews } from '@/server/repositories/editorial';
+
+export const metadata: Metadata = pageMetadata({
+  title: 'Biosfera Rádio TV Web | Notícias, Rádio e TV ao Vivo',
+  description: 'Acompanhe notícias, rádio ao vivo, programação, entrevistas e conteúdos da Biosfera Rádio TV Web.',
+  path: '/',
+});
+
 export default async function Home() {
   const [settings,news,programming]=await Promise.all([getSettings(),homeNews(),currentProgramming()]);
   return <div className="portal-home">

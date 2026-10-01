@@ -1,8 +1,17 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { publicProgramming,type Slot } from '@/server/services/programming';
 import { portalClock,addDays,daySchedule } from '@/lib/programming/engine.mjs';
+import { pageMetadata } from '@/lib/editorial/seo';
 import { ProgramNav,SlotCard } from '@/components/programming/public';
+
 export const dynamic='force-dynamic';
+export const metadata: Metadata = pageMetadata({
+  title: 'Programação da Rádio | Biosfera Rádio TV Web',
+  description: 'Confira os horários, programas e atrações da programação da Biosfera Rádio TV Web.',
+  path: '/programacao',
+});
+
 export default async function Page({searchParams}:{searchParams:Promise<{dia?:string}>}){
  const d=await publicProgramming(),clock=portalClock(new Date(),d.timezone),selected=(await searchParams).dia;
  const monday=addDays(clock.date,-((clock.weekday+6)%7));const dates=Array.from({length:7},(_,i)=>addDays(monday,i));const date=selected&&dates.includes(selected)?selected:clock.date;
