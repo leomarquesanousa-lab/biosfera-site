@@ -1,12 +1,12 @@
 'use client';
 
-import { FileUpload } from './file-upload';
+import { FileUpload } from '@/components/editorial/file-upload';
 
-export function ImageUpload({
+export function VideoUpload({
   label,
   value,
   onChange,
-  endpoint = '/api/editorial/upload',
+  endpoint = '/api/videos/upload',
 }: {
   label: string;
   value: string;
@@ -15,14 +15,14 @@ export function ImageUpload({
 }) {
   return (
     <FileUpload
-      kind="image"
+      kind="video"
       label={label}
       value={value}
       onChange={onChange}
       endpoint={endpoint}
-      accept="image/jpeg,image/png,image/webp"
-      maxBytes={5 * 1024 * 1024}
-      helperText="JPEG, PNG ou WebP · até 5 MB e 20 megapixels."
+      accept="video/mp4,video/webm"
+      maxBytes={100 * 1024 * 1024}
+      helperText="MP4 ou WebM · até 100 MB."
     />
   );
 }
