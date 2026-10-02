@@ -1,4 +1,5 @@
 import 'server-only';
+import { putR2, readR2, discardR2 } from './r2-storage.mjs';
 
 import {
   mkdir,
@@ -31,6 +32,8 @@ export async function storeImage(
   const filename =
     `${randomUUID()}.webp`;
 
+  if (await putR2(`media/${filename}`, bytes, 'image/webp')) return `/media/${filename}`;
+
   await mkdir(
     uploadDirectory(),
     {
@@ -52,7 +55,7 @@ export async function storeImage(
   return `/media/${filename}`;
 }
 
-export async function readImage(
+async function readLocalImage(
   filename: string,
 ) {
   if (
@@ -99,6 +102,8 @@ export async function discardImage(
     return;
   }
 
+  await discardR2(`media/${filename}`).catch(() => console.error('Falha ao remover mídia do R2.'));
+
   await unlink(
     path.join(
       uploadDirectory(),
@@ -132,6 +137,8 @@ export async function storeVideo(
   const filename =
     `${randomUUID()}.${extension}`;
 
+  if (await putR2(`video-media/${filename}`, bytes, mimeType)) return `/video-media/${filename}`;
+
   await mkdir(
     uploadDirectory(),
     {
@@ -153,7 +160,7 @@ export async function storeVideo(
   return `/video-media/${filename}`;
 }
 
-export async function readVideo(
+async function readLocalVideo(
   filename: string,
 ) {
   if (
@@ -190,6 +197,8 @@ export async function discardVideo(
     return;
   }
 
+  await discardR2(`video-media/${filename}`).catch(() => console.error('Falha ao remover mídia do R2.'));
+
   await unlink(
     path.join(
       uploadDirectory(),
@@ -214,4 +223,51 @@ export function videoContentType(
   }
 
   return null;
+}
+export async function readImage(filename: string) {
+  if (!IMAGE_FILENAME_REGEX.test(filename)) return null;
+  const local = await readLocalImage(filename);
+  if (local) return local;
+  const remote = await readR2('media/' + filename);
+  return remote ? Buffer.from(await remote.arrayBuffer()) : null;
+}
+
+export async function readVideo(filename: string) {
+  if (!VIDEO_FILENAME_REGEX.test(filename)) return null;
+  const local = await readLocalVideo(filename);
+  if (local) return local;
+  const remote = await readR2('video-media/' + filename);
+  return remote ? Buffer.from(await remote.arrayBuffer()) : null;
+}
+
+// Preserve the public URL and stream remote video, including byte ranges.
+export async function readVideoResponse(filename: string, request: Request) {
+  if (!VIDEO_FILENAME_REGEX.test(filename)) return null;
+  const local = await readLocalVideo(filename);
+  if (!local) {
+    const remote = await readR2('video-media/' + filename, request);
+    if (remote) remote.headers.set('Content-Type', videoContentType(filename)!);
+    return remote;
+  }
+  const headers = new Headers({
+    'Content-Type': videoContentType(filename)!,
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'public, max-age=3600',
+    'Accept-Ranges': 'bytes',
+  });
+  const range = request.method === 'GET' && !request.headers.has('if-range')
+    ? /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range') || '') : null;
+  let start = 0, end = local.length - 1, status = 200;
+  if (range && (range[1] || range[2])) {
+    start = range[1] ? Number(range[1]) : Math.max(0, local.length - Number(range[2]));
+    end = range[1] && range[2] ? Math.min(Number(range[2]), end) : end;
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= local.length) {
+      headers.set('Content-Range', 'bytes */' + local.length);
+      return new Response(null, { status: 416, headers });
+    }
+    status = 206;
+    headers.set('Content-Range', 'bytes ' + start + '-' + end + '/' + local.length);
+  }
+  headers.set('Content-Length', String(end - start + 1));
+  return new Response(request.method === 'HEAD' ? null : new Uint8Array(local.subarray(start, end + 1)), { status, headers });
 }
