@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-
 import {
   useEffect,
   useState,
@@ -50,8 +49,7 @@ function readConsent():
     const raw =
       decodeURIComponent(
         entry.substring(
-          COOKIE_NAME.length +
-            1,
+          COOKIE_NAME.length + 1,
         ),
       );
 
@@ -60,11 +58,9 @@ function readConsent():
 
     return {
       analytics:
-        parsed.analytics ===
-        true,
+        parsed.analytics === true,
       advertising:
-        parsed.advertising ===
-        true,
+        parsed.advertising === true,
     };
   } catch {
     return null;
@@ -76,9 +72,7 @@ function saveConsent(
 ) {
   const value =
     encodeURIComponent(
-      JSON.stringify(
-        consent,
-      ),
+      JSON.stringify(consent),
     );
 
   document.cookie =
@@ -94,6 +88,51 @@ function saveConsent(
         detail: consent,
       },
     ),
+  );
+}
+
+function CookieIcon() {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+    >
+      <path
+        d="
+          M39.5 26.2
+          C36.8 26.7 34 25.9 32 23.9
+          C30 21.9 29.2 19.1 29.7 16.4
+          C26.2 15.6 23.6 12.7 23.2 9.2
+          C14.7 9.6 8 16.6 8 25.2
+          C8 34.1 15.2 41.3 24.1 41.3
+          C32.7 41.3 39.8 34.6 40.2 26.1
+          C40 26.1 39.8 26.2 39.5 26.2
+          Z
+        "
+        fill="currentColor"
+      />
+
+      <circle
+        cx="18"
+        cy="21"
+        r="2.3"
+        fill="#06244b"
+      />
+
+      <circle
+        cx="26"
+        cy="31"
+        r="2.3"
+        fill="#06244b"
+      />
+
+      <circle
+        cx="16"
+        cy="31"
+        r="1.8"
+        fill="#06244b"
+      />
+    </svg>
   );
 }
 
@@ -188,157 +227,170 @@ export function CookieConsent() {
 
   return (
     <div
-      className="cookie-overlay"
+      className="cookie-layer"
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-labelledby="cookie-title"
     >
-      <div className="cookie-box">
-        <div className="cookie-copy">
-          <p className="cookie-eyebrow">
-            PRIVACIDADE
-          </p>
+      <section
+        className={
+          customizing
+            ? 'cookie-card is-customizing'
+            : 'cookie-card'
+        }
+      >
+        <div className="cookie-accent" />
 
-          <h2 id="cookie-title">
-            Suas escolhas de cookies
-          </h2>
+        <div className="cookie-header">
+          <div className="cookie-icon">
+            <CookieIcon />
+          </div>
 
-          <p>
-            A Biosfera utiliza cookies
-            necessários para o
-            funcionamento do portal.
-            Você também pode escolher
-            se deseja permitir cookies
-            de análise e publicidade.
-          </p>
+          <div className="cookie-heading">
+            <span className="cookie-eyebrow">
+              PRIVACIDADE
+            </span>
 
-          <p>
-            Sua escolha poderá ser
-            alterada posteriormente
-            pelo link de preferências
-            disponível no rodapé.
-          </p>
-
-          <div className="cookie-links">
-            <Link href="/politica-de-cookies">
-              Política de Cookies
-            </Link>
-
-            <Link href="/politica-de-privacidade">
-              Política de Privacidade
-            </Link>
+            <h2 id="cookie-title">
+              {customizing
+                ? 'Escolha como navegar'
+                : 'Cookies, do seu jeito.'}
+            </h2>
           </div>
         </div>
 
-        {customizing ? (
-          <div className="cookie-options">
-            <div className="cookie-option">
-              <div>
-                <strong>
-                  Cookies necessários
-                </strong>
+        {!customizing ? (
+          <>
+            <p className="cookie-description">
+              Usamos cookies essenciais
+              para o portal funcionar.
+              Você decide se permite
+              análise e publicidade.
+            </p>
 
-                <p>
-                  Utilizados para
-                  navegação,
-                  funcionamento,
-                  segurança e registro
-                  das suas escolhas.
-                </p>
-              </div>
+            <div className="cookie-links">
+              <Link href="/politica-de-cookies">
+                Política de Cookies
+              </Link>
 
-              <span className="always-on">
-                Sempre ativos
-              </span>
+              <span>•</span>
+
+              <Link href="/politica-de-privacidade">
+                Privacidade
+              </Link>
             </div>
+          </>
+        ) : (
+          <>
+            <p className="cookie-description">
+              Os essenciais ficam
+              sempre ativos. Os demais
+              ficam por sua escolha.
+            </p>
 
-            <label className="cookie-option">
-              <div>
-                <strong>
-                  Análise e desempenho
-                </strong>
+            <div className="cookie-options">
+              <div className="cookie-option">
+                <div className="option-copy">
+                  <strong>
+                    Essenciais
+                  </strong>
 
-                <p>
-                  Permitem compreender
-                  como o portal é
-                  utilizado e melhorar
-                  sua experiência.
-                </p>
+                  <span>
+                    Segurança e
+                    funcionamento.
+                  </span>
+                </div>
+
+                <span className="always-on">
+                  Sempre ativo
+                </span>
               </div>
 
-              <input
-                type="checkbox"
-                checked={
-                  consent.analytics
-                }
-                onChange={event =>
-                  setConsent(
-                    current => ({
-                      ...current,
-                      analytics:
-                        event.target
-                          .checked,
-                    }),
-                  )
-                }
-              />
-            </label>
+              <label className="cookie-option">
+                <div className="option-copy">
+                  <strong>
+                    Análise
+                  </strong>
 
-            <label className="cookie-option">
-              <div>
-                <strong>
-                  Publicidade
-                </strong>
+                  <span>
+                    Ajuda a entender o
+                    uso do portal.
+                  </span>
+                </div>
 
-                <p>
-                  Relacionados a
-                  recursos e serviços
-                  de publicidade
-                  utilizados pelo
-                  portal.
-                </p>
-              </div>
+                <input
+                  className="cookie-switch"
+                  type="checkbox"
+                  checked={
+                    consent.analytics
+                  }
+                  onChange={event =>
+                    setConsent(
+                      current => ({
+                        ...current,
+                        analytics:
+                          event.target
+                            .checked,
+                      }),
+                    )
+                  }
+                  aria-label="Permitir cookies de análise"
+                />
+              </label>
 
-              <input
-                type="checkbox"
-                checked={
-                  consent.advertising
-                }
-                onChange={event =>
-                  setConsent(
-                    current => ({
-                      ...current,
-                      advertising:
-                        event.target
-                          .checked,
-                    }),
-                  )
-                }
-              />
-            </label>
-          </div>
-        ) : null}
+              <label className="cookie-option">
+                <div className="option-copy">
+                  <strong>
+                    Publicidade
+                  </strong>
+
+                  <span>
+                    Recursos e medição
+                    de anúncios.
+                  </span>
+                </div>
+
+                <input
+                  className="cookie-switch"
+                  type="checkbox"
+                  checked={
+                    consent.advertising
+                  }
+                  onChange={event =>
+                    setConsent(
+                      current => ({
+                        ...current,
+                        advertising:
+                          event.target
+                            .checked,
+                      }),
+                    )
+                  }
+                  aria-label="Permitir cookies de publicidade"
+                />
+              </label>
+            </div>
+          </>
+        )}
 
         <div className="cookie-actions">
           {!customizing ? (
             <>
               <button
                 type="button"
-                className="cookie-button secondary"
+                className="cookie-button ghost"
                 onClick={
                   rejectOptional
                 }
               >
-                Recusar opcionais
+                Recusar
               </button>
 
               <button
                 type="button"
-                className="cookie-button secondary"
+                className="cookie-button ghost"
                 onClick={() =>
-                  setCustomizing(
-                    true,
-                  )
+                  setCustomizing(true)
                 }
               >
                 Personalizar
@@ -347,23 +399,21 @@ export function CookieConsent() {
               <button
                 type="button"
                 className="cookie-button primary"
-                onClick={
-                  acceptAll
-                }
+                onClick={acceptAll}
               >
-                Aceitar todos
+                Aceitar
               </button>
             </>
           ) : (
             <>
               <button
                 type="button"
-                className="cookie-button secondary"
+                className="cookie-button ghost"
                 onClick={
                   rejectOptional
                 }
               >
-                Recusar opcionais
+                Só essenciais
               </button>
 
               <button
@@ -373,116 +423,234 @@ export function CookieConsent() {
                   savePreferences
                 }
               >
-                Salvar preferências
+                Salvar escolhas
               </button>
             </>
           )}
         </div>
-      </div>
+
+        {customizing ? (
+          <button
+            type="button"
+            className="cookie-back"
+            onClick={() =>
+              setCustomizing(false)
+            }
+          >
+            ← Voltar
+          </button>
+        ) : null}
+      </section>
 
       <style jsx>{`
-        .cookie-overlay {
+        .cookie-layer {
           position: fixed;
-          inset: 0;
+          right: 22px;
+          bottom: 22px;
           z-index: 10000;
-          display: flex;
-          align-items: flex-end;
-          justify-content: center;
-          padding: 20px;
-          background:
-            rgba(
-              1,
-              14,
-              32,
-              0.55
-            );
-          backdrop-filter:
-            blur(3px);
+          width: min(
+            410px,
+            calc(100vw - 28px)
+          );
+          pointer-events: none;
         }
 
-        .cookie-box {
-          width: min(
-            920px,
-            100%
-          );
-          padding: 26px;
+        .cookie-card {
+          position: relative;
+          overflow: hidden;
+          width: 100%;
+          padding: 18px;
           border: 1px solid
             rgba(
               255,
               255,
               255,
-              0.14
+              0.16
             );
-          border-radius: 18px;
-          background: #06244b;
+          border-radius: 22px;
+          background:
+            linear-gradient(
+              145deg,
+              rgba(
+                6,
+                36,
+                75,
+                0.97
+              ),
+              rgba(
+                3,
+                25,
+                54,
+                0.98
+              )
+            );
           color: #ffffff;
           box-shadow:
-            0 20px 70px
-            rgba(
-              0,
-              0,
-              0,
-              0.35
+            0 24px 60px
+              rgba(
+                1,
+                14,
+                32,
+                0.3
+              ),
+            0 4px 16px
+              rgba(
+                1,
+                14,
+                32,
+                0.18
+              );
+          backdrop-filter:
+            blur(18px);
+          -webkit-backdrop-filter:
+            blur(18px);
+          pointer-events: auto;
+          animation:
+            cookie-enter
+            0.4s
+            cubic-bezier(
+              0.2,
+              0.8,
+              0.2,
+              1
             );
         }
 
-        .cookie-copy {
-          max-width: 760px;
+        .cookie-card.is-customizing {
+          width: min(
+            470px,
+            calc(100vw - 28px)
+          );
+        }
+
+        .cookie-accent {
+          position: absolute;
+          top: 0;
+          left: 20px;
+          right: 20px;
+          height: 2px;
+          border-radius: 0 0 999px 999px;
+          background:
+            linear-gradient(
+              90deg,
+              transparent,
+              #38d4f5,
+              #7cecff,
+              transparent
+            );
+          opacity: 0.9;
+        }
+
+        .cookie-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .cookie-icon {
+          display: grid;
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          place-items: center;
+          border: 1px solid
+            rgba(
+              56,
+              212,
+              245,
+              0.24
+            );
+          border-radius: 14px;
+          background:
+            rgba(
+              56,
+              212,
+              245,
+              0.1
+            );
+          color: #38d4f5;
+        }
+
+        .cookie-icon :global(svg) {
+          width: 26px;
+          height: 26px;
+        }
+
+        .cookie-heading {
+          min-width: 0;
         }
 
         .cookie-eyebrow {
-          margin: 0 0 8px;
-          color: #38d4f5;
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 0.14em;
+          display: block;
+          margin-bottom: 2px;
+          color: #65e2fb;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.16em;
         }
 
         h2 {
-          margin: 0 0 10px;
+          margin: 0;
           color: #ffffff;
-          font-size:
-            clamp(
-              22px,
-              3vw,
-              30px
-            );
+          font-size: 19px;
+          font-weight: 800;
+          line-height: 1.15;
+          letter-spacing: -0.02em;
         }
 
-        p {
-          margin: 0 0 10px;
+        .cookie-description {
+          margin: 13px 0 0;
           color:
             rgba(
               255,
               255,
               255,
-              0.82
+              0.76
             );
-          line-height: 1.6;
+          font-size: 13px;
+          line-height: 1.55;
         }
 
         .cookie-links {
           display: flex;
+          align-items: center;
           flex-wrap: wrap;
-          gap: 16px;
-          margin-top: 12px;
+          gap: 7px;
+          margin-top: 10px;
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.34
+            );
+          font-size: 11px;
         }
 
         .cookie-links
           :global(a) {
-          color: #46d8f6;
-          font-size: 13px;
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.68
+            );
           font-weight: 700;
-          text-decoration:
-            underline;
-          text-underline-offset:
-            3px;
+          text-decoration: none;
+          transition:
+            color 0.2s ease;
+        }
+
+        .cookie-links
+          :global(a:hover) {
+          color: #65e2fb;
         }
 
         .cookie-options {
           display: grid;
-          gap: 10px;
-          margin-top: 22px;
+          gap: 7px;
+          margin-top: 14px;
         }
 
         .cookie-option {
@@ -490,43 +658,125 @@ export function CookieConsent() {
           align-items: center;
           justify-content:
             space-between;
-          gap: 22px;
-          padding: 14px 16px;
+          gap: 14px;
+          padding: 10px 11px;
           border: 1px solid
             rgba(
               255,
               255,
               255,
-              0.12
+              0.09
             );
-          border-radius: 12px;
+          border-radius: 13px;
           background:
             rgba(
               255,
               255,
               255,
-              0.05
+              0.045
             );
         }
 
-        .cookie-option p {
-          margin: 4px 0 0;
-          font-size: 13px;
+        .option-copy {
+          display: grid;
+          gap: 2px;
+          min-width: 0;
         }
 
-        .cookie-option input {
-          width: 22px;
-          height: 22px;
-          flex: 0 0 auto;
-          accent-color:
-            #38d4f5;
+        .option-copy strong {
+          color: #ffffff;
+          font-size: 13px;
+          line-height: 1.25;
+        }
+
+        .option-copy span {
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.58
+            );
+          font-size: 11px;
+          line-height: 1.35;
         }
 
         .always-on {
           flex: 0 0 auto;
-          color: #38d4f5;
-          font-size: 12px;
-          font-weight: 800;
+          padding: 5px 8px;
+          border-radius: 999px;
+          background:
+            rgba(
+              56,
+              212,
+              245,
+              0.1
+            );
+          color: #65e2fb;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.02em;
+        }
+
+        .cookie-switch {
+          position: relative;
+          width: 38px;
+          height: 22px;
+          flex: 0 0 38px;
+          margin: 0;
+          appearance: none;
+          -webkit-appearance: none;
+          border: 1px solid
+            rgba(
+              255,
+              255,
+              255,
+              0.18
+            );
+          border-radius: 999px;
+          background:
+            rgba(
+              255,
+              255,
+              255,
+              0.1
+            );
+          cursor: pointer;
+          transition:
+            background 0.2s ease,
+            border-color 0.2s ease;
+        }
+
+        .cookie-switch::after {
+          content: '';
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow:
+            0 2px 6px
+              rgba(
+                0,
+                0,
+                0,
+                0.25
+              );
+          transition:
+            transform 0.2s ease;
+        }
+
+        .cookie-switch:checked {
+          border-color: #38d4f5;
+          background: #38d4f5;
+        }
+
+        .cookie-switch:checked::after {
+          transform:
+            translateX(16px);
+          background: #06244b;
         }
 
         .cookie-actions {
@@ -534,68 +784,209 @@ export function CookieConsent() {
           justify-content:
             flex-end;
           flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 22px;
+          gap: 7px;
+          margin-top: 15px;
         }
 
         .cookie-button {
-          min-height: 44px;
-          padding: 10px 17px;
-          border-radius: 9px;
+          min-height: 36px;
+          padding: 8px 12px;
+          border-radius: 11px;
           font: inherit;
-          font-size: 14px;
-          font-weight: 800;
+          font-size: 11px;
+          font-weight: 900;
           cursor: pointer;
+          transition:
+            transform 0.18s ease,
+            background 0.18s ease,
+            border-color 0.18s ease;
+        }
+
+        .cookie-button:hover {
+          transform:
+            translateY(-1px);
         }
 
         .cookie-button.primary {
           border: 1px solid
             #38d4f5;
-          background: #38d4f5;
-          color: #06244b;
+          background:
+            linear-gradient(
+              135deg,
+              #38d4f5,
+              #67e4fc
+            );
+          color: #052344;
+          box-shadow:
+            0 7px 20px
+              rgba(
+                56,
+                212,
+                245,
+                0.16
+              );
         }
 
-        .cookie-button.secondary {
+        .cookie-button.ghost {
           border: 1px solid
             rgba(
               255,
               255,
               255,
-              0.22
+              0.13
             );
           background:
             rgba(
               255,
               255,
               255,
-              0.06
+              0.045
             );
-          color: #ffffff;
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.78
+            );
+        }
+
+        .cookie-button.ghost:hover {
+          border-color:
+            rgba(
+              255,
+              255,
+              255,
+              0.25
+            );
+          background:
+            rgba(
+              255,
+              255,
+              255,
+              0.08
+            );
+        }
+
+        .cookie-back {
+          display: block;
+          margin: 11px 0 -2px;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.5
+            );
+          font: inherit;
+          font-size: 10px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .cookie-back:hover {
+          color: #65e2fb;
+        }
+
+        @keyframes cookie-enter {
+          from {
+            opacity: 0;
+            transform:
+              translateY(18px)
+              scale(0.97);
+          }
+
+          to {
+            opacity: 1;
+            transform:
+              translateY(0)
+              scale(1);
+          }
         }
 
         @media (
           max-width: 640px
         ) {
-          .cookie-overlay {
-            padding: 10px;
+          .cookie-layer {
+            right: 12px;
+            bottom: 12px;
+            left: 12px;
+            width: auto;
           }
 
-          .cookie-box {
-            padding: 20px;
-            border-radius: 15px;
+          .cookie-card,
+          .cookie-card.is-customizing {
+            width: 100%;
+            padding: 15px;
+            border-radius: 18px;
           }
 
-          .cookie-option {
-            align-items:
-              flex-start;
+          .cookie-icon {
+            width: 38px;
+            height: 38px;
+            flex-basis: 38px;
+            border-radius: 12px;
+          }
+
+          .cookie-icon
+            :global(svg) {
+            width: 23px;
+            height: 23px;
+          }
+
+          h2 {
+            font-size: 17px;
+          }
+
+          .cookie-description {
+            margin-top: 11px;
+            font-size: 12px;
           }
 
           .cookie-actions {
             display: grid;
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .cookie-actions
+            .primary:last-child {
+            grid-column:
+              1 / -1;
+          }
+
+          .is-customizing
+            .cookie-actions {
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .is-customizing
+            .cookie-actions
+            .primary:last-child {
+            grid-column: auto;
           }
 
           .cookie-button {
             width: 100%;
+          }
+        }
+
+        @media (
+          prefers-reduced-motion:
+            reduce
+        ) {
+          .cookie-card {
+            animation: none;
+          }
+
+          .cookie-button,
+          .cookie-switch,
+          .cookie-switch::after {
+            transition: none;
           }
         }
       `}</style>
