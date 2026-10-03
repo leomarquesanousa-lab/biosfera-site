@@ -144,6 +144,7 @@ export function PublicHeader({
             <Link
               href="/admin"
               className="restricted-area-link"
+              aria-label="Área restrita"
             >
               <span
                 aria-hidden="true"
@@ -151,7 +152,7 @@ export function PublicHeader({
                 🔒
               </span>
 
-              <span>
+              <span className="restricted-area-label">
                 Área restrita
               </span>
             </Link>

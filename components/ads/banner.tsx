@@ -14,5 +14,5 @@ export function AdBanner({position}:{position:string}){
   return ()=>{observer.disconnect();clearTimeout(timer);document.removeEventListener('visibilitychange',update);};
  },[ad,loaded]);
  if(!ad)return null;
- return <aside ref={element} className="ad-banner" aria-label="Publicidade" data-slot={position}><small>PUBLICIDADE</small><a href={`/api/ads/click/${ad.id}?receipt=${ad.receipt}`} target="_blank" rel="sponsored noopener noreferrer"><picture>{ad.mobile&&<source media="(max-width: 640px)" srcSet={ad.mobile}/>}<img key={ad.receipt} src={ad.image} alt={ad.alt} onLoad={()=>setLoaded(ad.receipt)} onError={()=>setAd(null)}/></picture></a></aside>;
+ return <aside ref={element} className="ad-banner" aria-label="Publicidade" data-slot={position}><small>PUBLICIDADE</small><a href={`/api/ads/click/${ad.id}?receipt=${ad.receipt}`} target="_blank" rel="sponsored noopener noreferrer"><picture>{ad.mobile&&<source media="(max-width: 760px)" srcSet={ad.mobile}/>}<img key={ad.receipt} src={ad.image} alt={ad.alt} onLoad={()=>setLoaded(ad.receipt)} onError={()=>setAd(null)}/></picture></a></aside>;
 }

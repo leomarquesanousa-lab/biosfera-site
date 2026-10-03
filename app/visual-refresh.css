@@ -416,3 +416,39 @@ input[type=checkbox] {accent-color:var(--blue);width:18px;height:18px}
 /* Integrações do painel */
 .integration-card{display:grid;gap:1rem;padding:1.25rem;border:1px solid var(--border-color,#dbe3ec);border-radius:16px;background:var(--surface,#fff)}
 .integration-card h2{margin:0 0 .35rem}.integration-card p{margin:0}.integration-note{padding:1rem;border-radius:12px;background:#f6f8fb}
+/* Mobile refinements only: desktop rules above remain unchanged. */
+@media (max-width: 760px) {
+ .portal-header .site-header {min-height:76px;padding-block:12px;gap:12px}
+ .portal-header .header-brand {min-width:0}
+ .portal-header .header-brand .brand-logo {width:148px;max-width:100%;height:auto}
+ .portal-header .header-actions {gap:8px;flex-shrink:0}
+ .portal-header .header-listen {display:none}
+ .portal-header .restricted-area-link {display:flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;min-height:44px;border:1px solid rgba(255,255,255,.2);border-radius:var(--radius-sm);font-size:18px}
+ .portal-header .restricted-area-label {display:none}
+ .portal-header .menu-toggle {width:44px;min-width:44px;height:44px;padding:0;font-size:26px}
+ .portal-header .main-nav {padding:12px 18px 18px;max-height:calc(100dvh - 80px - var(--player-height));overflow-y:auto}
+ .portal-header .main-nav>div {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .portal-header .main-nav a {display:flex;align-items:center;min-height:48px;padding:12px;font-size:15px;border-radius:var(--radius-sm)}
+ .portal-header .main-nav a[aria-current=page] {background:rgba(255,255,255,.08)}
+ .public-main :is(.portal-row,.news-grid,.news-card,.news-card-copy,.camera-panel,.chat-panel,.song-form) {min-width:0}
+ .public-main :is(h1,h2,h3,p,a) {overflow-wrap:anywhere}
+ .public-main :is(video,iframe,img) {max-width:100%}
+ .public-main :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {min-width:0;max-width:100%;font-size:16px}
+ .public-main :is(button,.button),.site-footer nav a {min-height:44px}
+ .public-main .home-welcome h1 {font-size:32px;line-height:1.15}
+ .public-main .home-section-heading h2,.public-main .section-heading h2 {font-size:26px;line-height:1.2}
+ .public-main .news-card h2 {font-size:22px;line-height:1.3}
+ .public-main .article-page h1 {font-size:32px;line-height:1.15}
+ .public-main .song-section h2 {font-size:30px}
+ .home-banner-frame {height:auto;aspect-ratio:2/1}
+ .home-banner-slide img {object-fit:contain}
+ .home-banner-controls {height:auto;min-height:52px;flex-wrap:wrap;gap:0;padding:4px}
+ .home-banner-controls :is(.home-banner-arrow,.home-banner-indicator) {width:44px;height:44px}
+ .home-banner-controls .home-banner-pause {min-height:44px}
+ .home-ad-placeholder {height:auto;min-height:96px;padding:16px;gap:8px}
+ .ad-banner {width:100%;max-width:380px;min-width:0;margin:24px auto}
+ .ad-banner a {min-height:44px;border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;background:var(--light)}
+ .ad-banner picture {display:block;width:100%}
+ .ad-banner img {width:100%;height:auto;max-height:320px;object-fit:contain;border-radius:0}
+ .site-footer nav a {display:flex;align-items:center;padding-block:8px}
+}
