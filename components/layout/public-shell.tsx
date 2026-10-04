@@ -19,13 +19,16 @@ import {
 } from '@/lib/brand';
 
 import { PublicHeader } from './public-header';
+import { WhatsAppButton } from './whatsapp-button';
 
 export function PublicShell({
   children,
   siteName,
+  whatsappNumber,
 }: {
   children: React.ReactNode;
   siteName: string;
+  whatsappNumber: string;
 }) {
   return (
     <>
@@ -176,6 +179,7 @@ export function PublicShell({
       </footer>
 
       <CookieConsent />
+      <WhatsAppButton number={whatsappNumber} />
     </>
   );
 }
