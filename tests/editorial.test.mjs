@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { renderBody } from '../lib/editorial/content.mjs';
+import { renderBody, renderedImagePaths } from '../lib/editorial/content.mjs';
 import { normalizeImage, MAX_IMAGE_BYTES } from '../lib/editorial/image.mjs';
 
 test('Markdown preserva formatação e remove HTML ativo, atributos e URLs perigosas', () => {
@@ -14,6 +14,11 @@ test('imagens do corpo aceitam apenas referências ao storage local', () => {
   const html = renderBody('![local](/media/12345678-1234-1234-1234-123456789abc.webp) ![externa](https://evil.test/pixel.png) ![data](data:image/svg+xml;base64,abc)');
   assert.equal((html.match(/<img/g) || []).length,1);
   assert.ok(!html.includes('evil.test'));
+});
+
+test('existência deve ser verificada também para imagens Markdown por referência e HTML permitido', () => {
+  const url = '/media/12345678-1234-1234-1234-123456789abc.webp';
+  assert.deepEqual(renderedImagePaths(`![foto][ref]\n\n[ref]: ${url}\n\n<img src="${url}">\n![externa](https://example.com/image.png)`), [url]);
 });
 test('upload valida bytes reais, extensão, MIME, tamanho e converte imagem para WebP', async () => {
   const png = await sharp({ create:{width:20,height:20,channels:3,background:'#337744'} }).png().toBuffer();

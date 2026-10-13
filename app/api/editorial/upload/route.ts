@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { getUser } from '@/lib/auth/session';
-import { getPool } from '@/lib/db/pool';
-import { normalizeImage, MAX_IMAGE_BYTES } from '@/lib/editorial/image.mjs';
-import { storeImage, discardImage } from '@/server/services/storage';
+import { MAX_IMAGE_BYTES } from '@/lib/editorial/image.mjs';
+import { EditorialError } from '@/lib/editorial/validation';
+import { StorageError } from '@/server/services/r2-storage.mjs';
+import { persistEditorialImage } from '@/server/services/editorial-media';
 export const runtime = 'nodejs';
 export async function POST(request: Request) {
   const user = await getUser();
@@ -12,7 +12,6 @@ export async function POST(request: Request) {
     if (new URL(request.headers.get('origin') || '').host !== expected) throw new Error();
   } catch { return Response.json({ error: 'Origem inválida.' }, { status: 403 }); }
   if (Number(request.headers.get('content-length')) > MAX_IMAGE_BYTES) return Response.json({ error: 'O limite é 5 MB.' }, { status: 413 });
-  let stored = '';
   try {
     const reader = request.body?.getReader();
     if (!reader) throw new Error();
@@ -26,20 +25,10 @@ export async function POST(request: Request) {
       chunks.push(part.value);
     }
     const filename = decodeURIComponent(request.headers.get('x-file-name') || '').slice(0, 255);
-    const bytes = await normalizeImage(Buffer.concat(chunks), filename, request.headers.get('content-type') || '');
-    stored = await storeImage(bytes);
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      const id = randomUUID();
-      await client.query("INSERT INTO media_assets(id,path,mime_type,size,created_by) VALUES($1,$2,'image/webp',$3,$4)", [id,stored,bytes.length,user.id]);
-      await client.query("INSERT INTO audit_log(user_id,action,entity,entity_id) VALUES($1,'media.upload','media_assets',$2)", [user.id,id]);
-      await client.query('COMMIT');
-    } catch (error) { await client.query('ROLLBACK'); throw error; }
-    finally { client.release(); }
-    return Response.json({ url: stored }, { status: 201 });
-  } catch {
-    if (stored) await discardImage(stored);
-    return Response.json({ error: 'Não foi possível enviar. Use JPEG, PNG ou WebP válido, até 5 MB e 20 megapixels.' }, { status: 400 });
+    const url = await persistEditorialImage({ bytes: Buffer.concat(chunks), filename, mimeType: request.headers.get('content-type') || '' }, user.id, { sourceType: 'manual' });
+    return Response.json({ url }, { status: 201 });
+  } catch (error) {
+    if (error instanceof EditorialError) return Response.json({ error: error.message }, { status: 400 });
+    return Response.json({ error: error instanceof StorageError ? error.message : 'Não foi possível concluir o upload. Tente novamente.' }, { status: 503 });
   }
 }

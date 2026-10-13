@@ -2,7 +2,7 @@
 import { useRef, useState, useTransition } from 'react';
 import { previewBody } from '@/app/admin/editorial-actions';
 import { ImageUpload } from './image-upload';
-export function MarkdownEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function MarkdownEditor({ value, onChange, onUploadBusyChange }: { value: string; onChange: (value: string) => void; onUploadBusyChange?: (busy: boolean) => void }) {
   const field = useRef<HTMLTextAreaElement>(null);
   const [html, setHtml] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +29,7 @@ export function MarkdownEditor({ value, onChange }: { value: string; onChange: (
     </div>
     <textarea ref={field} id="body" name="body" value={value} onChange={event => onChange(event.target.value)} required maxLength={100000} rows={18} />
     <small>Separe parágrafos com uma linha em branco. Quebras simples também são preservadas. Edite os links entre parênteses.</small>
-    <details><summary>Inserir imagem no conteúdo</summary><ImageUpload label="Imagem do conteúdo" value="" onChange={url => insert('\n![', `](${url})\n`, 'Descreva a imagem')} /></details>
+    <details><summary>Inserir imagem no conteúdo</summary><ImageUpload label="Imagem do conteúdo" value="" onBusyChange={onUploadBusyChange} onChange={url => insert('\n![', `](${url})\n`, 'Descreva a imagem')} /></details>
     <button type="button" className="button secondary" disabled={pending} onClick={() => startTransition(async () => {
       const result = await previewBody(value); setError(result.error || ''); setHtml(result.html || '');
     })}>{pending ? 'Gerando…' : 'Atualizar prévia'}</button>

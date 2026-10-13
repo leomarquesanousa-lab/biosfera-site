@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { once } from 'node:events';
-import { remoteUrl,publicAddress,fetchRemotePage,requestPage } from '../lib/security/remote-page.mjs';
+import { remoteUrl,publicAddress,fetchRemotePage,requestPage,fetchRemoteImage,requestImage } from '../lib/security/remote-page.mjs';
 import { extractArticle } from '../lib/editorial/import-article.mjs';
 const resolve=async()=>[{address:'93.184.215.14',family:4}];
 const fixture=`<html><head><meta property="og:title" content="Ciência na Biosfera"><meta property="og:description" content="Resumo da fonte"><meta property="og:site_name" content="Fonte editorial"><meta property="og:image" content="/foto.jpg"><script type="application/ld+json">{"@type":"NewsArticle","author":{"name":"Autora original"},"datePublished":"2026-09-20T10:00:00Z","image":{"url":"https://example.com/foto.jpg","creditText":"Fotógrafo"}}</script></head><body><nav>Menu</nav><article><h1>Título alternativo</h1><p>Primeiro parágrafo da matéria.</p><h2>Contexto</h2><p>Segundo parágrafo.</p><figure><img src="/foto.jpg" alt="Paisagem"><figcaption>Legenda original</figcaption></figure><script>alert('x')</script></article></body></html>`;
@@ -26,6 +26,30 @@ test('valida DNS completo, fixa endereço e revalida cada redirecionamento',asyn
 test('timeout inclui resolução DNS e resposta remota',async()=>{
   await assert.rejects(()=>fetchRemotePage('https://example.com',{resolve:()=>new Promise(()=>{}),timeoutMs:20}),/demorou/);
   await assert.rejects(()=>fetchRemotePage('https://example.com',{resolve,request:()=>new Promise(()=>{}),timeoutMs:20}),/demorou/);
+});
+
+test('download de imagem revalida DNS/redirects e limita MIME, bytes e timeout', async () => {
+  const request = async () => ({ status: 200, bytes: Buffer.from('image'), mimeType: 'image/webp' });
+  assert.equal((await fetchRemoteImage('https://example.com/image', { resolve, request })).bytes.toString(), 'image');
+  await assert.rejects(fetchRemoteImage('https://example.com/image', { resolve: async () => [{ address: '127.0.0.1', family: 4 }], request }));
+  await assert.rejects(fetchRemoteImage('https://example.com/image', { resolve, request: async () => ({ status: 302, location: 'http://169.254.169.254/image' }) }));
+  await assert.rejects(fetchRemoteImage('https://example.com/image', { resolve, request, maxBytes: 2 }));
+  await assert.rejects(fetchRemoteImage('https://example.com/image', { resolve, request: async () => ({ status: 200, bytes: Buffer.from('svg'), mimeType: 'image/svg+xml' }) }));
+  await assert.rejects(fetchRemoteImage('https://example.com/image', { resolve: () => new Promise(() => {}), request, timeoutMs: 20 }), /demorou/);
+});
+
+test('transporte de imagem valida MIME real da resposta, limite em streaming e compressão', async () => {
+  const server = http.createServer((req,res) => {
+    res.setHeader('content-type', req.url === '/html' ? 'text/html' : 'image/webp');
+    if (req.url === '/compressed') res.setHeader('content-encoding','gzip');
+    res.end(req.url === '/large' ? Buffer.alloc(101) : Buffer.from('image'));
+  });
+  server.listen(0,'127.0.0.1'); await once(server,'listening');
+  try {
+    const get = url => requestImage(new URL(`http://example.com:${server.address().port}${url}`), { address:'127.0.0.1', family:4 }, AbortSignal.timeout(2000),100);
+    assert.equal((await get('/')).mimeType,'image/webp');
+    for (const url of ['/html','large','/compressed']) await assert.rejects(get(url.startsWith('/') ? url : '/' + url));
+  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
 test('extração conserva origem e prepara somente DRAFT, sem executar scripts ou baixar imagem',async()=>{
   const page=await fetchRemotePage('https://example.com/original',{resolve,request:async()=>({status:200,html:fixture})});

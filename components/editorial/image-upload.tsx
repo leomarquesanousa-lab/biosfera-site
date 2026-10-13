@@ -7,15 +7,18 @@ export function ImageUpload({
   value,
   onChange,
   endpoint = '/api/editorial/upload',
+  onBusyChange,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   endpoint?: string;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   return (
     <FileUpload
       kind="image"
+      onBusyChange={onBusyChange}
       label={label}
       value={value}
       onChange={onChange}

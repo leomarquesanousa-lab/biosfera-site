@@ -1,5 +1,7 @@
 import 'server-only';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+
+export class StorageError extends Error {}
 
 const names = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME', 'R2_ENDPOINT', 'R2_PUBLIC_URL'];
 let cached;
@@ -9,14 +11,14 @@ export function r2Storage() {
   if (!values.some(Boolean)) return null;
   const [account, accessKeyId, secretAccessKey, bucket, configuredEndpoint, publicUrl] = values;
   if (!accessKeyId || !secretAccessKey || !bucket || (!configuredEndpoint && !account) || !publicUrl) {
-    throw new Error('Configuração R2 incompleta. Verifique as variáveis R2 do servidor.');
+    throw new StorageError('Configuração R2 incompleta. Verifique as variáveis R2 do servidor.');
   }
   const endpoint = configuredEndpoint || `https://${account}.r2.cloudflarestorage.com`;
   for (const value of [endpoint, publicUrl]) {
     let url;
-    try { url = new URL(value); } catch { throw new Error('URL do R2 inválida.'); }
+    try { url = new URL(value); } catch { throw new StorageError('URL do R2 inválida.'); }
     if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
-      throw new Error('As URLs do R2 devem usar HTTPS, sem credenciais ou parâmetros.');
+      throw new StorageError('As URLs do R2 devem usar HTTPS, sem credenciais ou parâmetros.');
     }
   }
   const signature = JSON.stringify(values);
@@ -35,6 +37,42 @@ export function r2Storage() {
   return cached;
 }
 
+export function requiredR2Storage() {
+  const storage = r2Storage();
+  if (!storage) throw new StorageError('Configure o R2 antes de enviar imagens editoriais.');
+  return storage;
+}
+
+export async function statR2(key) {
+  const storage = requiredR2Storage();
+  try {
+    const object = await storage.client.send(new HeadObjectCommand({ Bucket: storage.bucket, Key: key }));
+    return { size: object.ContentLength, mimeType: object.ContentType };
+  } catch (error) {
+    if (error.$metadata?.httpStatusCode === 404) return null;
+    throw new StorageError('Não foi possível verificar a mídia no R2.');
+  }
+}
+
+export async function readR2Object(key) {
+  const storage = requiredR2Storage();
+  try {
+    const object = await storage.client.send(new GetObjectCommand({ Bucket: storage.bucket, Key: key }));
+    return Buffer.from(await object.Body.transformToByteArray());
+  } catch (error) {
+    if (error.$metadata?.httpStatusCode === 404) return null;
+    throw new StorageError('Não foi possível ler a mídia no R2.');
+  }
+}
+
+export async function checkR2Health() {
+  const storage = requiredR2Storage();
+  try {
+    await storage.client.send(new HeadBucketCommand({ Bucket: storage.bucket }));
+    return { storageProvider: 'r2', bucket: storage.bucket, prefix: 'media/', accessible: true };
+  } catch { throw new StorageError('Não foi possível acessar o bucket R2.'); }
+}
+
 export async function putR2(key, bytes, contentType) {
   const storage = r2Storage();
   if (!storage) return false;
@@ -43,7 +81,7 @@ export async function putR2(key, bytes, contentType) {
       Bucket: storage.bucket, Key: key, Body: bytes, ContentType: contentType,
       CacheControl: 'public, max-age=31536000, immutable',
     }));
-  } catch { throw new Error('Não foi possível gravar a mídia no R2.'); }
+  } catch { throw new StorageError('Não foi possível gravar a mídia no R2.'); }
   return true;
 }
 

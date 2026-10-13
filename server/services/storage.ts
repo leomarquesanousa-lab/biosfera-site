@@ -1,5 +1,5 @@
 import 'server-only';
-import { putR2, readR2, discardR2 } from './r2-storage.mjs';
+import { putR2, readR2, discardR2, statR2, readR2Object, requiredR2Storage, r2Storage, StorageError } from './r2-storage.mjs';
 
 import {
   mkdir,
@@ -32,26 +32,19 @@ export async function storeImage(
   const filename =
     `${randomUUID()}.webp`;
 
-  if (await putR2(`media/${filename}`, bytes, 'image/webp')) return `/media/${filename}`;
-
-  await mkdir(
-    uploadDirectory(),
-    {
-      recursive: true,
-    },
-  );
-
-  await writeFile(
-    path.join(
-      uploadDirectory(),
-      filename,
-    ),
-    bytes,
-    {
-      flag: 'wx',
-    },
-  );
-
+  requiredR2Storage();
+  const key = `media/${filename}`;
+  await putR2(key, bytes, 'image/webp');
+  try {
+    const object = await statR2(key);
+    if (!object || object.size !== bytes.length || object.mimeType !== 'image/webp') {
+      throw new StorageError('A imagem não foi confirmada no R2. Envie novamente.');
+    }
+  } catch (error) {
+    // Only this newly allocated UUID can be cleaned up; never a pre-existing asset.
+    await discardR2(key).catch(() => console.error('Falha ao limpar upload não confirmado no R2.'));
+    throw error;
+  }
   return `/media/${filename}`;
 }
 
@@ -104,12 +97,6 @@ export async function discardImage(
 
   await discardR2(`media/${filename}`).catch(() => console.error('Falha ao remover mídia do R2.'));
 
-  await unlink(
-    path.join(
-      uploadDirectory(),
-      filename,
-    ),
-  ).catch(() => {});
 }
 
 export async function storeVideo(
@@ -226,10 +213,18 @@ export function videoContentType(
 }
 export async function readImage(filename: string) {
   if (!IMAGE_FILENAME_REGEX.test(filename)) return null;
-  const local = await readLocalImage(filename);
-  if (local) return local;
-  const remote = await readR2('media/' + filename);
-  return remote ? Buffer.from(await remote.arrayBuffer()) : null;
+  // Signed R2 reads do not depend on a public CDN host or cached CDN 404s.
+  if (r2Storage() || process.env.NODE_ENV === 'production') {
+    const remote = await readR2Object('media/' + filename);
+    if (remote || process.env.NODE_ENV === 'production') return remote;
+  }
+  // Read-only compatibility for legacy development files. New writes always use R2.
+  return readLocalImage(filename);
+}
+
+export async function imageObjectInfo(url: string) {
+  if (!url.startsWith('/media/') || !IMAGE_FILENAME_REGEX.test(url.slice(7))) return null;
+  return statR2(url.slice(1));
 }
 
 export async function readVideo(filename: string) {

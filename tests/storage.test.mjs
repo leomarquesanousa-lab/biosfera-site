@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
-import { mkdtemp, readdir, rmdir } from 'node:fs/promises';
+import { mkdtemp, readdir, rmdir, writeFile, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { S3Client } from '@aws-sdk/client-s3';
@@ -13,7 +13,7 @@ registerHooks({ resolve(specifier, context, next) {
 const storage = await import('../server/services/storage.ts');
 
 test('storage: local compatibility, R2 upload/read/range/cleanup and safe failures', async () => {
-  const names = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME', 'R2_ENDPOINT', 'R2_PUBLIC_URL', 'UPLOAD_DIR'];
+  const names = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET_NAME', 'R2_ENDPOINT', 'R2_PUBLIC_URL', 'NODE_ENV', 'UPLOAD_DIR'];
   const previous = names.map(name => process.env[name]);
   const originalFetch = globalThis.fetch, originalSend = S3Client.prototype.send;
   const directory = await mkdtemp(path.join(tmpdir(), 'biosfera-storage-'));
@@ -22,8 +22,16 @@ test('storage: local compatibility, R2 upload/read/range/cleanup and safe failur
   try {
     for (const name of names) delete process.env[name];
     process.env.UPLOAD_DIR = directory;
+    process.env.NODE_ENV = 'development';
     const bytes = Buffer.from('0123456789');
-    localImage = await storage.storeImage(bytes);
+    await assert.rejects(storage.storeImage(bytes), /Configure o R2/);
+    assert.equal((await readdir(directory)).length, 0, 'Missing R2 never writes editorial images locally');
+    localImage = '/media/12345678-1234-1234-1234-123456789abc.webp';
+    await writeFile(path.join(directory, path.basename(localImage)), bytes);
+    process.env.NODE_ENV = 'production';
+    await assert.rejects(storage.storeImage(bytes), /Configure o R2/);
+    await assert.rejects(storage.readImage(path.basename(localImage)), /Configure o R2/);
+    process.env.NODE_ENV = 'development';
     localVideo = await storage.storeVideo(bytes, 'video/mp4');
     assert.deepEqual(await storage.readImage(path.basename(localImage)), bytes);
     assert.deepEqual(await storage.readVideo(path.basename(localVideo)), bytes);
@@ -44,6 +52,15 @@ test('storage: local compatibility, R2 upload/read/range/cleanup and safe failur
         assert.equal(command.input.Bucket, 'test');
         objects.set(command.input.Key, command.input);
       } else if (command.constructor.name === 'DeleteObjectCommand') objects.delete(command.input.Key);
+      else if (command.constructor.name === 'HeadObjectCommand') {
+        const object = objects.get(command.input.Key);
+        if (!object) throw Object.assign(new Error('missing'), { $metadata: { httpStatusCode: 404 } });
+        return { ContentLength: object.Body.length, ContentType: object.ContentType };
+      } else if (command.constructor.name === 'GetObjectCommand') {
+        const object = objects.get(command.input.Key);
+        if (!object) throw Object.assign(new Error('missing'), { $metadata: { httpStatusCode: 404 } });
+        return { Body: { transformToByteArray: async () => object.Body } };
+      }
       else assert.fail('Unexpected S3 operation');
       return {};
     };
@@ -64,6 +81,11 @@ test('storage: local compatibility, R2 upload/read/range/cleanup and safe failur
     assert.match(video, /^\/video-media\/.+\.webm$/);
     assert.equal((await readdir(directory)).length, 2);
     assert.deepEqual(await storage.readImage(path.basename(image)), bytes);
+    assert.deepEqual(await storage.imageObjectInfo(image), { size: bytes.length, mimeType: 'image/webp' });
+    process.env.NODE_ENV = 'production';
+    assert.equal(await storage.readImage(path.basename(localImage)), null, 'Production never reads legacy local images');
+    process.env.NODE_ENV = 'development';
+    assert.deepEqual(await storage.readImage(path.basename(localImage)), bytes);
     const remote = await storage.readVideoResponse(path.basename(video), new Request('https://site.test/video', { headers: { range: 'bytes=2-5' } }));
     assert.equal(remote.status, 206);
     assert.equal(remote.headers.get('content-range'), 'bytes 2-5/10');
@@ -84,7 +106,7 @@ test('storage: local compatibility, R2 upload/read/range/cleanup and safe failur
     globalThis.fetch = originalFetch;
     S3Client.prototype.send = originalSend;
     for (const name of names.slice(0, -1)) delete process.env[name];
-    if (localImage) await storage.discardImage(localImage);
+    if (localImage) await unlink(path.join(directory, path.basename(localImage)));
     if (localVideo) await storage.discardVideo(localVideo);
     await rmdir(directory);
     names.forEach((name, i) => { if (previous[i] === undefined) delete process.env[name]; else process.env[name] = previous[i]; });

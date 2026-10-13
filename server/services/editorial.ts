@@ -4,6 +4,8 @@ import type { PoolClient } from 'pg';
 import { getPool } from '@/lib/db/pool';
 import { EditorialError, newsInput, text, slug, uuid, mediaPath } from '@/lib/editorial/validation';
 import type { TaxonomyKind } from '@/lib/editorial/types';
+import { assertEditorialImage } from './editorial-media';
+import { renderedImagePaths } from '@/lib/editorial/content.mjs';
 
 async function transaction<T>(operation: (client: PoolClient) => Promise<T>) {
   const client = await getPool().connect();
@@ -15,7 +17,7 @@ async function audit(client: PoolClient, userId: string, action: string, entity:
   await client.query('INSERT INTO audit_log(user_id,action,entity,entity_id,metadata) VALUES($1,$2,$3,$4,$5)', [userId, action, entity, id, JSON.stringify(metadata)]);
 }
 async function checkMedia(client: PoolClient, path: string) {
-  if (path && !(await client.query('SELECT id FROM media_assets WHERE path=$1', [path])).rowCount) throw new EditorialError('Imagem não encontrada. Envie novamente.');
+  await assertEditorialImage(path, client);
 }
 export async function saveTaxonomy(kind: TaxonomyKind, form: FormData, userId: string) {
   const table = kind === 'categories' ? 'categories' : 'authors';
@@ -67,14 +69,15 @@ export async function saveNews(form: FormData, userId: string) {
     const previous = id ? (await client.query('SELECT * FROM news WHERE id=$1 FOR UPDATE', [id])).rows[0] : null;
     if (id && !previous) throw new EditorialError('Notícia não encontrada.');
     if (previous && previous.version !== version) throw new EditorialError('Esta notícia foi alterada em outra aba. Recarregue a página antes de editar novamente.');
-    const author = (await client.query('SELECT active FROM authors WHERE id=$1 FOR SHARE', [input.author_id])).rows[0];
+    const author = (await client.query('SELECT active,photo_url FROM authors WHERE id=$1 FOR SHARE', [input.author_id])).rows[0];
     if (!author || (!author.active && previous?.author_id !== input.author_id)) throw new EditorialError('Selecione um autor ativo.');
+    await checkMedia(client, author.photo_url);
     const cats = await client.query('SELECT id,active FROM categories WHERE id=ANY($1::uuid[]) FOR SHARE', [input.categoryIds]);
     const oldCats = previous ? (await client.query('SELECT category_id FROM news_categories WHERE news_id=$1', [id])).rows.map(row => row.category_id) : [];
     if (cats.rowCount !== input.categoryIds.length || cats.rows.some(row => !row.active && !oldCats.includes(row.id))) throw new EditorialError('Selecione categorias ativas.');
     await checkMedia(client, input.cover_image);
     // O corpo permanece Markdown; referências de imagens devem ser uploads existentes.
-    const imagePaths = [...new Set(input.body.match(/\/media\/[a-f0-9-]{36}\.webp/g) || [])];
+    const imagePaths = renderedImagePaths(input.body);
     for (const path of imagePaths) await checkMedia(client,path);
     const key = id || randomUUID();
     const { categoryIds, ...fields } = input;

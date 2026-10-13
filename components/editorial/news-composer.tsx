@@ -18,6 +18,6 @@ export function NewsComposer({authors,categories}:{authors:Taxonomy[];categories
   }
   return <><details className="import-panel"><summary>Importar matéria por URL</summary><p>Prepare um rascunho editável a partir de uma fonte externa. Revise o conteúdo, a autoria e os direitos de republicação antes de publicar. Importar substitui os campos ainda não salvos abaixo.</p><form aria-label="Importar matéria por URL" onSubmit={event=>{event.preventDefault();importForEditing();}}>
     <label>URL da matéria<input ref={urlInput} type="url" name="url" required maxLength={2048} placeholder="https://…" aria-describedby="import-help" /></label><button type="button" className="button" disabled={pending} onClick={importForEditing}>{pending?'Importando…':'IMPORTAR PARA EDIÇÃO'}</button></form><p id="import-help">O conteúdo será importado como rascunho para revisão antes da publicação.</p>{error && <p className="form-error" role="alert">{error}</p>}{imported && <p className="success-message" role="status">Importação preparada como rascunho. Nada foi publicado ou salvo automaticamente.</p>}</details>
-    <NewsForm key={revision} imported={imported} authors={authors} categories={categories} />
+    <NewsForm key={revision} imported={imported} authors={authors} categories={categories} importPending={pending} />
   </>;
 }

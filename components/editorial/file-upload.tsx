@@ -12,6 +12,7 @@ type FileUploadProps = {
   maxBytes: number;
   helperText: string;
   kind: 'image' | 'video';
+  onBusyChange?: (busy: boolean) => void;
 };
 
 type SelectedFile = {
@@ -75,8 +76,10 @@ export function FileUpload({
   maxBytes,
   helperText,
   kind,
+  onBusyChange,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const uploading = useRef(false);
 
   const [busy, setBusy] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -104,6 +107,7 @@ export function FileUpload({
   }
 
   async function uploadFile(file: File) {
+    if (uploading.current) return;
     setError('');
 
     if (!isAcceptedFile(file, accept)) {
@@ -123,6 +127,8 @@ export function FileUpload({
     }
 
     setBusy(true);
+    uploading.current = true;
+    onBusyChange?.(true);
     setSelectedFile({ name: file.name, size: file.size });
 
     try {
@@ -162,6 +168,8 @@ export function FileUpload({
       );
     } finally {
       setBusy(false);
+      uploading.current = false;
+      onBusyChange?.(false);
       resetFileInput();
     }
   }

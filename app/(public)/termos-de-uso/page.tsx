@@ -1,7 +1,4 @@
-import type {
-  Metadata,
-} from 'next';
-
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -42,32 +39,31 @@ export default function Page() {
       </p>
 
       <h2>
-        1. Aceitação
+        1. Aceitação dos termos
       </h2>
 
       <p>
-        Ao acessar o portal, o
-        usuário declara estar
-        ciente destes termos e
-        compromete-se a utilizar
-        o serviço de forma lícita
-        e responsável.
+        Ao acessar ou utilizar o
+        portal, o usuário declara
+        estar ciente destes termos
+        e compromete-se a utilizar
+        a plataforma de forma
+        lícita e responsável.
       </p>
 
       <h2>
-        2. Conteúdo do portal
+        2. Conteúdo disponibilizado
       </h2>
 
       <p>
-        O portal disponibiliza
+        O portal pode disponibilizar
         conteúdos jornalísticos,
-        informativos,
-        institucionais,
-        audiovisuais, rádio ao
-        vivo, TV ao vivo,
-        programação e outros
+        informativos, institucionais,
+        audiovisuais, programação,
+        rádio ao vivo, TV ao vivo,
+        vídeos, publicidade e outros
         recursos relacionados à
-        Biosfera.
+        Biosfera Rádio TV Web.
       </p>
 
       <h2>
@@ -75,142 +71,180 @@ export default function Page() {
       </h2>
 
       <p>
-        O usuário não deverá:
+        O usuário compromete-se a
+        não utilizar o portal para:
       </p>
 
       <ul>
         <li>
-          utilizar o portal para
-          atividades ilícitas;
+          atividades ilegais ou
+          fraudulentas;
         </li>
 
         <li>
-          tentar acessar áreas
-          restritas sem
+          tentativa de acesso a
+          áreas restritas sem
           autorização;
         </li>
 
         <li>
-          interferir na
-          segurança,
+          interferência no
+          funcionamento,
           disponibilidade ou
-          funcionamento do
-          serviço;
+          segurança da plataforma;
         </li>
 
         <li>
-          introduzir códigos
-          maliciosos ou realizar
-          ataques;
+          distribuição de código
+          malicioso;
         </li>
 
         <li>
-          utilizar conteúdo de
-          forma que viole
-          direitos autorais,
-          marcas ou outros
-          direitos aplicáveis.
+          prática de ataques,
+          invasões ou exploração
+          indevida de sistemas;
+        </li>
+
+        <li>
+          violação de direitos
+          autorais, marcas, direitos
+          de imagem ou outros
+          direitos de terceiros.
         </li>
       </ul>
 
       <h2>
-        4. Direitos autorais e
-        propriedade intelectual
+        4. Propriedade intelectual
       </h2>
 
       <p>
-        Textos, marcas,
-        identidade visual,
-        fotografias, vídeos,
-        áudios e demais conteúdos
-        podem estar protegidos
-        por direitos autorais,
-        direitos de imagem,
-        marcas ou licenças de
-        terceiros.
+        Textos, marcas, identidade
+        visual, fotografias, vídeos,
+        áudios, programas e demais
+        conteúdos disponibilizados
+        no portal podem estar
+        protegidos por direitos
+        autorais, direitos de imagem,
+        marcas ou outras formas de
+        proteção legal.
       </p>
 
       <p>
-        A disponibilização de
-        conteúdo no portal não
-        implica autorização para
-        reprodução comercial ou
-        redistribuição fora das
-        hipóteses permitidas por
-        lei ou por autorização
-        expressa.
+        O acesso ao portal não
+        transfere ao usuário qualquer
+        direito de propriedade sobre
+        esses materiais.
       </p>
 
       <h2>
-        5. Conteúdo de terceiros
+        5. Conteúdos de terceiros
       </h2>
 
       <p>
-        O portal pode apresentar
-        players, vídeos, anúncios,
-        links e serviços
-        fornecidos por terceiros.
-        A Biosfera não controla
-        integralmente sistemas
-        externos e suas
-        respectivas políticas.
+        O portal pode incorporar ou
+        utilizar serviços e conteúdos
+        externos, como players,
+        plataformas de vídeo,
+        streaming, redes sociais,
+        publicidade e outros
+        serviços de terceiros.
+      </p>
+
+      <p>
+        Esses serviços possuem suas
+        próprias regras, termos e
+        políticas, sobre os quais a
+        Biosfera não possui controle
+        integral.
       </p>
 
       <h2>
-        6. Disponibilidade
+        6. Disponibilidade do portal
       </h2>
 
       <p>
         A Biosfera busca manter o
-        portal disponível, porém
-        podem ocorrer
-        interrupções decorrentes
-        de manutenção, falhas de
-        infraestrutura,
+        portal disponível de forma
+        contínua, porém poderão
+        ocorrer interrupções por
+        manutenção, problemas de
+        infraestrutura, falhas de
         fornecedores externos,
-        internet, streaming ou
-        situações fora do
-        controle razoável do
-        portal.
+        indisponibilidade de internet,
+        streaming ou situações fora
+        do controle razoável da
+        plataforma.
       </p>
 
       <h2>
-        7. Informações
-        jornalísticas
+        7. Conteúdo jornalístico e informativo
       </h2>
 
       <p>
-        Conteúdos podem ser
-        atualizados, corrigidos,
-        complementados ou
-        retirados quando
-        necessário.
+        Informações publicadas podem
+        ser atualizadas, corrigidas,
+        complementadas, substituídas
+        ou retiradas quando necessário.
+      </p>
+
+      <p>
+        Conteúdos de caráter
+        informativo não devem ser
+        interpretados como garantia
+        absoluta de atualização
+        permanente ou ausência de
+        eventuais erros.
       </p>
 
       <h2>
-        8. Participação do
-        usuário
+        8. Participação do usuário
       </h2>
 
       <p>
-        Quando o portal permitir
-        comentários, chat,
-        formulários ou outros
-        recursos participativos,
-        o usuário será
-        responsável pelas
-        informações e conteúdos
-        que enviar.
+        Quando houver recursos de
+        participação, como chat,
+        formulários, comentários ou
+        outros meios de interação, o
+        usuário será responsável pelo
+        conteúdo que enviar.
       </p>
 
       <p>
-        Conteúdo abusivo,
-        ilegal, ofensivo,
-        fraudulento ou que viole
-        direitos de terceiros
-        poderá ser moderado ou
-        removido.
+        Poderão ser moderados ou
+        removidos conteúdos que sejam:
       </p>
+
+      <ul>
+        <li>
+          ilegais;
+        </li>
+
+        <li>
+          abusivos;
+        </li>
+
+        <li>
+          fraudulentos;
+        </li>
+
+        <li>
+          discriminatórios;
+        </li>
+
+        <li>
+          ofensivos;
+        </li>
+
+        <li>
+          contrários a direitos de
+          terceiros;
+        </li>
+
+        <li>
+          incompatíveis com a
+          finalidade do portal.
+        </li>
+      </ul>
 
       <h2>
         9. Privacidade
@@ -218,7 +252,8 @@ export default function Page() {
 
       <p>
         O tratamento de dados
-        pessoais é explicado na{' '}
+        pessoais relacionado ao uso
+        do portal está descrito na{' '}
         <Link href="/politica-de-privacidade">
           Política de Privacidade
         </Link>
@@ -230,9 +265,10 @@ export default function Page() {
       </h2>
 
       <p>
-        Informações sobre cookies
-        e tecnologias semelhantes
-        estão disponíveis na{' '}
+        Informações sobre o uso de
+        cookies e tecnologias
+        semelhantes estão disponíveis
+        na{' '}
         <Link href="/politica-de-cookies">
           Política de Cookies
         </Link>
@@ -240,26 +276,51 @@ export default function Page() {
       </p>
 
       <h2>
-        11. Alterações
+        11. Limitação de responsabilidade
       </h2>
 
       <p>
-        Estes termos poderão ser
-        atualizados sempre que
-        necessário. A versão
-        vigente será aquela
-        publicada nesta página.
+        A Biosfera não será
+        responsável por danos
+        decorrentes do uso indevido do
+        portal, de falhas provocadas
+        por terceiros ou de eventos
+        fora de seu controle razoável.
+      </p>
+
+      <p>
+        Links e serviços externos são
+        disponibilizados para
+        conveniência e integração, mas
+        seu funcionamento depende dos
+        respectivos fornecedores.
       </p>
 
       <h2>
-        12. Contato
+        12. Alterações dos termos
+      </h2>
+
+      <p>
+        Estes Termos de Uso podem ser
+        atualizados para refletir
+        alterações legais, técnicas,
+        editoriais ou operacionais.
+      </p>
+
+      <p>
+        A versão vigente será sempre
+        aquela publicada nesta página.
+      </p>
+
+      <h2>
+        13. Contato
       </h2>
 
       <p>
         Dúvidas ou solicitações
-        podem ser encaminhadas
-        pelos canais oficiais do
-        portal.
+        relacionadas a estes termos
+        podem ser encaminhadas pelos
+        canais oficiais do portal.
       </p>
 
       <p>
