@@ -31,8 +31,13 @@ export default async function Home() {
       </aside>
     </div>
     <section className="home-latest" aria-labelledby="latest-news-title">
-      <div className="home-section-heading"><h2 id="latest-news-title">Últimas notícias</h2><Link href="/noticias">Ver todas as notícias ↗</Link></div>
-      {news.lead.length + news.recent.length > 0 ? <div className="news-grid">{[...news.lead, ...news.recent].filter((item, index, items) => items.findIndex(other => other.id === item.id) === index).map(item => <NewsCard key={item.id} news={item} home />)}</div> : <p className="empty-state">Em breve, acompanhe aqui as notícias da Biosfera.</p>}
+      <div className="home-section-heading"><h2 id="latest-news-title">Últimas notícias</h2></div>
+      {news.lead.length > 0 ? <div className="news-grid">{news.lead.map(item => <NewsCard key={item.id} news={item} home />)}</div> : <p className="empty-state">Em breve, acompanhe aqui as notícias da Biosfera.</p>}
+    </section>
+    <section className="home-all-news" aria-labelledby="all-news-title">
+      <div className="home-section-heading"><h2 id="all-news-title">Acompanhe todas as notícias</h2></div>
+      {news.recent.length > 0 && <div className="home-compact-news-grid">{news.recent.map(item => <NewsCard key={item.id} news={item} home />)}</div>}
+      <div className="home-all-news-action"><Link className="button" href="/noticias">Ver todas as notícias →</Link></div>
     </section>
     <div className="portal-row community-row"><LiveCamera url={settings.liveCameraEmbedUrl} /><ChatPreview /></div>
     <SongRequest startedAt={news.renderedAt} />

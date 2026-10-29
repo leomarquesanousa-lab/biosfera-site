@@ -61,11 +61,7 @@ export async function sitemapNews() {
   return (await getPool().query<{ slug: string; updated_at: Date }>('SELECT slug,updated_at FROM public_news ORDER BY visible_at DESC,id LIMIT 49000')).rows;
 }
 export async function homeNews() {
-  const result=await getPool().query<News>(`WITH lead AS (
-    SELECT id FROM public_news ORDER BY featured DESC,visible_at DESC,id LIMIT 2
-  ) SELECT ${projection} FROM public_news n JOIN authors a ON a.id=n.author_id
-    ORDER BY (n.id IN (SELECT id FROM lead)) DESC,
-    CASE WHEN n.id IN (SELECT id FROM lead) THEN n.featured ELSE false END DESC,
-    n.visible_at DESC,n.id LIMIT 8`);
+  const result=await getPool().query<News>(`SELECT ${projection} FROM public_news n JOIN authors a ON a.id=n.author_id
+    ORDER BY n.visible_at DESC,n.id LIMIT 13`);
   return {lead:result.rows.slice(0,3),recent:result.rows.slice(3),renderedAt:Date.now()};
 }

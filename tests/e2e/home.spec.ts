@@ -35,13 +35,11 @@ test('home: zero, uma, duas e mais notícias, destaque, cronologia, sem duplicar
   await article('destaque-antigo','PUBLISHED',true,10);
   await page.reload();
   await expect(page.locator('.home-latest .news-card')).toHaveCount(3);
-  await expect(page.locator('.home-latest .news-card h2').first()).toHaveText('destaque-antigo');
-  await expect(page.locator('.home-latest .news-card h2').nth(1)).toHaveText('noticia-recente');
-  await expect(page.locator('.home-latest .news-card h2').nth(2)).toHaveText('noticia-unica');
+  await expect(page.locator('.home-latest .news-card h2')).toHaveText(['noticia-recente','noticia-unica','destaque-antigo']);
   await expect(page.locator('.home-latest .news-card')).toHaveCount(3);
   await pool.query('UPDATE news SET featured=true WHERE id=$1',[first]);
   await page.reload();
-  await expect(page.locator('.home-latest .news-card h2')).toHaveText(['noticia-unica','destaque-antigo','noticia-recente']);
+  await expect(page.locator('.home-latest .news-card h2')).toHaveText(['noticia-recente','noticia-unica','destaque-antigo']);
   const titles=await page.locator('.portal-home .news-card h2').allTextContents();
   expect(new Set(titles).size).toBe(titles.length);
   for(const name of ['rascunho-oculto','arquivo-oculto','agendada-futura'])expect(titles).not.toContain(name);
@@ -57,6 +55,26 @@ test('home: zero, uma, duas e mais notícias, destaque, cronologia, sem duplicar
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   const mobile=await page.locator('.broadcast-row>*').evaluateAll(elements=>elements.map(el=>el.getBoundingClientRect().y));expect(mobile[1]).toBeGreaterThan(mobile[0]);
   await page.screenshot({path:'test-results/home21-mobile.png',fullPage:true});
+  for(let i=0;i<14;i++)await article(`grade-adicional-${i}`,'PUBLISHED',false,20+i);
+  await page.reload();
+  await expect(page.locator('.home-latest .news-card')).toHaveCount(3);
+  await expect(page.locator('.home-all-news .news-card')).toHaveCount(10);
+  const links=await page.locator('.portal-home .home-news-link').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
+  expect(new Set(links).size).toBe(13);
+  await expect(page.locator('.home-latest a[href="/noticias"]')).toHaveCount(0);
+  await expect(page.getByRole('link',{name:'Ver todas as notícias →'})).toHaveAttribute('href','/noticias');
+  for(const [width,columns] of [[1440,5],[768,3],[390,2],[320,2]]) {
+    await page.setViewportSize({width,height:1000});
+    const grid=page.locator('.home-compact-news-grid');
+    expect(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)).toBe(columns);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:`test-results/home-news-grid-${width}.png`,fullPage:true});
+  }
+  await page.locator('.home-all-news .home-news-link').first().click();
+  await expect(page.locator('h1')).toContainText('destaque-antigo');
+  await page.goto('/');
+  await page.getByRole('link',{name:'Ver todas as notícias →'}).click();
+  await expect(page).toHaveURL(/\/noticias$/);
 });
 test('câmera só carrega após clique e controles da home usam o mesmo áudio persistente',async({page})=>{
   let cameraRequests=0;
@@ -130,7 +148,7 @@ test('cards uniformes com capas horizontal, quadrada, vertical e ausente',async(
   await page.setViewportSize({width,height:1000});await page.goto('/');
   await expect(page.locator('.home-news-card')).toHaveCount(4);
   await expect(page.locator('.home-news-placeholder')).toHaveCount(1);
-  const cards=await page.locator('.home-news-card').evaluateAll(els=>els.map(el=>{
+  const cards=await page.locator('.home-latest .home-news-card').evaluateAll(els=>els.map(el=>{
    const box=el.getBoundingClientRect(),media=el.querySelector('.home-news-media')!.getBoundingClientRect();
    return {height:box.height,y:box.y,bottom:box.bottom,media:media.height,ratio:media.width/media.height,title:el.querySelector('h2')!.getBoundingClientRect().y-box.y,date:el.querySelector('small')!.getBoundingClientRect().bottom-box.y};
   }));
