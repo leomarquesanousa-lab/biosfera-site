@@ -59,7 +59,7 @@ export function AdminSessionGuard({
     }, [logoutAction]);
 
   const scheduleCheck =
-    useCallback(() => {
+    useCallback(function checkIdleSession() {
       if (timerRef.current) {
         clearTimeout(
           timerRef.current,
@@ -105,7 +105,7 @@ export function AdminSessionGuard({
       timerRef.current =
         setTimeout(
           () => {
-            scheduleCheck();
+            checkIdleSession();
           },
           remaining,
         );

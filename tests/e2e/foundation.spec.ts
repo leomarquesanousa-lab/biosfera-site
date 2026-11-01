@@ -4,7 +4,7 @@ if (process.env.BIOSFERA_E2E !== '1') throw new Error('Execute npm run test:e2e 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 test.afterAll(async () => { await pool.end(); });
 test('migrations e bootstrap são idempotentes', async () => {
-  expect((await pool.query('SELECT count(*)::int AS count FROM schema_migrations')).rows[0].count).toBe(5);
+  expect((await pool.query('SELECT count(*)::int AS count FROM schema_migrations')).rows[0].count).toBe(8);
   expect((await pool.query("SELECT count(*)::int AS count FROM users WHERE role='OWNER'")).rows[0].count).toBe(1);
 });
 test('login, sessão protegida, expiração, inativação e logout', async ({ page, context }) => {

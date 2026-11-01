@@ -159,7 +159,9 @@ export function CookieConsent() {
     const existing =
       readConsent();
 
+    // Hydrate browser-only cookie state after SSR; keep the initial render unchanged.
     if (!existing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Synchronize with document.cookie on mount.
       setVisible(true);
     } else {
       setConsent(existing);
